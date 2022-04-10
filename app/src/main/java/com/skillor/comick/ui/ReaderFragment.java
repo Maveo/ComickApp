@@ -1,4 +1,4 @@
-package com.skillor.comick.ui.reader;
+package com.skillor.comick.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -21,7 +21,6 @@ import com.skillor.comick.utils.ComickService;
 
 public class ReaderFragment extends Fragment {
 
-    private ReaderViewModel readerViewModel;
     private FragmentReaderBinding binding;
 
     private WebView readerWebView;
@@ -31,7 +30,6 @@ public class ReaderFragment extends Fragment {
     private ComickService.Comic comic;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        readerViewModel = new ViewModelProvider(this).get(ReaderViewModel.class);
 
         binding = FragmentReaderBinding.inflate(inflater, container, false);
         View root = binding.getRoot();

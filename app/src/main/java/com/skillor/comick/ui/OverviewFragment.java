@@ -1,4 +1,4 @@
-package com.skillor.comick.ui.overview;
+package com.skillor.comick.ui;
 
 import android.os.Bundle;
 import android.text.Editable;
@@ -31,13 +31,11 @@ import java.util.List;
 
 public class OverviewFragment extends Fragment {
 
-    private OverviewViewModel overviewViewModel;
     private FragmentOverviewBinding binding;
 
     private ComicListAdapter comicListAdapter;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        overviewViewModel = new ViewModelProvider(this).get(OverviewViewModel.class);
 
         binding = FragmentOverviewBinding.inflate(inflater, container, false);
         View root = binding.getRoot();

@@ -7,14 +7,20 @@
 
     <fragment
         android:id="@+id/nav_overview"
-        android:name="com.skillor.comick.ui.overview.OverviewFragment"
+        android:name="com.skillor.comick.ui.OverviewFragment"
         android:label="@string/menu_overview"
         tools:layout="@layout/fragment_overview" />
 
     <fragment
         android:id="@+id/nav_reader"
-        android:name="com.skillor.comick.ui.reader.ReaderFragment"
+        android:name="com.skillor.comick.ui.ReaderFragment"
         android:label="@string/menu_reader"
         tools:layout="@layout/fragment_reader" />
+
+    <fragment
+        android:id="@+id/nav_settings"
+        android:name="com.skillor.comick.ui.SettingsFragment"
+        android:label="@string/menu_settings"
+        tools:layout="@layout/fragment_settings" />
 
 </navigation>

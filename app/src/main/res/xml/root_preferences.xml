@@ -1,0 +1,25 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory app:title="@string/files_header">
+
+        <SwitchPreferenceCompat
+            app:key="use_internal_files"
+            app:title="@string/use_internal_files_title" />
+
+        <EditTextPreference
+            android:dependency="use_internal_files"
+            app:key="external_file_path"
+            app:title="@string/external_file_path" />
+
+<!--        <ListPreference-->
+<!--            app:defaultValue="reply"-->
+<!--            app:entries="@array/reply_entries"-->
+<!--            app:entryValues="@array/reply_values"-->
+<!--            app:key="reply"-->
+<!--            app:title="@string/reply_title"-->
+<!--            app:useSimpleSummaryProvider="true" />-->
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
