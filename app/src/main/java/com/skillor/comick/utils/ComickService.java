@@ -6,6 +6,9 @@ import android.graphics.BitmapFactory;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.skillor.comick.MainActivity;
+import com.skillor.comick.R;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,6 +42,7 @@ public class ComickService {
     private final MutableLiveData<List<Comic>> comics = new MutableLiveData<>();
 
     private File directory;
+    private MainActivity activity;
 
     private final static String BASE_URL = "https://comick.fun/";
     private final static String[] BASE_IMAGE_URLS = {"https://meo2.comick.pictures/file/comick/", "https://meo.comick.pictures/"};
@@ -51,8 +55,9 @@ public class ComickService {
         comics.setValue(new ArrayList<>());
     }
 
-    public void initialize(File directory) {
-        this.directory = directory;
+    private void initialize() {
+        if (directory == null) return;
+        comicList.clear();
         for (File file : this.directory.listFiles()) {
             if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
                 try {
@@ -63,6 +68,12 @@ public class ComickService {
             }
         }
         comics.postValue(comicList);
+    }
+
+    public void initialize(MainActivity activity) {
+        this.activity = activity;
+        this.directory = activity.getApplicationContext().getExternalFilesDir(null);
+        initialize();
     }
 
     public static ComickService getInstance() {
@@ -105,6 +116,12 @@ public class ComickService {
             public void run() {
                 try {
                     Comic c = new Comic(url);
+                    for (Comic comic : comicList) {
+                        if (comic.getComicTitle().equals(c.getComicTitle())) {
+                            errorText.postValue("Comic already exists: " + c.getComicTitle());
+                            return;
+                        }
+                    }
                     c.saveInfo();
                     c.downloadCover();
                     comicList.add(c);
@@ -132,6 +149,24 @@ public class ComickService {
         new Thread(runnable).start();
     }
 
+    public void updateAllComicData() {
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    for (Comic c : comicList) {
+                        c.updateData();
+                        c.saveInfo();
+                        comics.postValue(comicList);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        new Thread(runnable).start();
+    }
+
     public class Comic {
         private String comicTitle;
         private String comicPath;
@@ -149,13 +184,17 @@ public class ComickService {
         private boolean isUpdating = false;
 
         private String prettyPrint(Double d) {
-            if (d == null) return "None";
+            if (d == null) return activity.getString(R.string.none);
             int i = (int)(double)d;
             return d == i ? String.valueOf(i) : String.valueOf(d);
         }
 
         public String getComicTitle() {
             return comicTitle;
+        }
+
+        public String getComicId() {
+            return comicTitle.replaceAll("\\s+", "_").toLowerCase();
         }
 
         public Bitmap getCoverBitmap() {
@@ -196,6 +235,7 @@ public class ComickService {
         }
 
         public String getCurrentChapterTitle() {
+            if (currentChapterIndex == null) return activity.getString(R.string.none);
             return downloadedChapters[currentChapterIndex];
         }
 
@@ -207,8 +247,14 @@ public class ComickService {
             return (new File(getCurrentChapterPath())).list();
         }
 
+        public Integer getCurrentChapterIndex() {
+            return currentChapterIndex;
+        }
+
         public void addChapter(int o) {
             currentChapterIndex += o;
+            activity.getSharedPrefEditor().putInt(activity.getString(R.string.current_chapter_prefix_key) + getComicId(), currentChapterIndex);
+            activity.getSharedPrefEditor().commit();
         }
 
         public boolean hasNextChapter() {
@@ -223,6 +269,10 @@ public class ComickService {
             downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
 
             this.updateData(url);
+        }
+
+        public void updateData() throws Exception {
+            this.updateData(BASE_URL + comicPath + "/" + firstChapterId);
         }
 
         public void updateData(String url) throws Exception {
@@ -286,7 +336,12 @@ public class ComickService {
                         return Double.valueOf(o1).compareTo(Double.valueOf(o2));
                     }
                 });
-                currentChapterIndex = 0;
+                currentChapterIndex = activity.getSharedPref().getInt(activity.getString(R.string.current_chapter_prefix_key) + getComicId(), 0);
+                if (currentChapterIndex < 0) {
+                    currentChapterIndex = 0;
+                } else if (currentChapterIndex > downloadedChapters.length - 1) {
+                    currentChapterIndex = downloadedChapters.length - 1;
+                }
                 downloadedFirstChapterI = Double.parseDouble(downloadedChapters[0]);
                 downloadedLastChapterI = Double.parseDouble(downloadedChapters[downloadedChapters.length-1]);
 
@@ -397,16 +452,16 @@ public class ComickService {
                     downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI() + " - " + String.valueOf((int)((double)i * 100 / images.length())) + "%");
                 }
 
-                String[] t = new String[downloadedChapters.length + 1];
-                for (int i = 0; i < downloadedChapters.length; i++) {
-                    t[i] = downloadedChapters[i];
+                if (downloadedChapters.length == 0 || !currentDownloadChapter.equals(downloadedChapters[downloadedChapters.length - 1])) {
+                    String[] t = new String[downloadedChapters.length + 1];
+                    System.arraycopy(downloadedChapters, 0, t, 0, downloadedChapters.length);
+                    t[t.length - 1] = currentDownloadChapter;
+                    downloadedChapters = t;
+
+                    downloadedLastChapterI = Double.parseDouble(currentDownloadChapter);
+
+                    downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
                 }
-                t[t.length - 1] = currentDownloadChapter;
-                downloadedChapters = t;
-
-                downloadedLastChapterI = Double.parseDouble(currentDownloadChapter);
-
-                downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
 
                 if (chapter.getJSONObject("pageProps").isNull("next")) {
                     break;

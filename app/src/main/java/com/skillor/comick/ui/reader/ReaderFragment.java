@@ -1,23 +1,18 @@
 package com.skillor.comick.ui.reader;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.TextView;
 
-import androidx.appcompat.app.ActionBar;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.Navigation;
 
 import com.skillor.comick.MainActivity;
 import com.skillor.comick.R;
@@ -87,6 +82,12 @@ public class ReaderFragment extends Fragment {
             comic = ComickService.getInstance().getComicByTitle(getArguments().getString("comic_title"));
         } else {
             comic = ComickService.getInstance().getLastReadComic();
+        }
+
+        if (comic == null || comic.getCurrentChapterIndex() == null) {
+            Navigation.findNavController(container).popBackStack();
+            Navigation.findNavController(container).navigate(R.id.nav_overview);
+            return root;
         }
 
         SharedPreferences.Editor edit = ((MainActivity) getActivity()).getSharedPrefEditor();

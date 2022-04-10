@@ -5,26 +5,21 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.StrictMode;
-import android.util.Log;
 import android.view.KeyEvent;
-import android.view.View;
 import android.view.Menu;
+import android.view.View;
 import android.widget.Button;
 
-import com.google.android.material.snackbar.Snackbar;
-import com.google.android.material.navigation.NavigationView;
-
 import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.navigation.NavigationView;
 import com.skillor.comick.databinding.ActivityMainBinding;
 import com.skillor.comick.utils.ComickService;
 
@@ -99,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        ComickService.getInstance().initialize(getApplicationContext().getExternalFilesDir(null));
+        ComickService.getInstance().initialize(this);
 
         String lastRead = sharedPref.getString(getString(R.string.last_read_key), null);
         if (lastRead != null) {
@@ -226,13 +221,6 @@ public class MainActivity extends AppCompatActivity {
         systemUIHidden = false;
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
     }
 
     @Override

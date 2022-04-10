@@ -1,6 +1,9 @@
 package com.skillor.comick.ui.overview;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -24,12 +27,15 @@ import com.skillor.comick.R;
 import com.skillor.comick.databinding.FragmentOverviewBinding;
 import com.skillor.comick.utils.ComickService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class OverviewFragment extends Fragment {
 
     private OverviewViewModel overviewViewModel;
     private FragmentOverviewBinding binding;
+
+    private ComicListAdapter comicListAdapter;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         overviewViewModel = new ViewModelProvider(this).get(OverviewViewModel.class);
@@ -45,18 +51,44 @@ public class OverviewFragment extends Fragment {
             }
         });
 
-        Button button = binding.downloadUrlButton;
-        button.setOnClickListener(new View.OnClickListener()
+        Button downloadUrlButton = binding.downloadUrlButton;
+        downloadUrlButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                ComickService.getInstance().downloadComic(binding.downloadUrlText.getText().toString());
+                if (binding.downloadUrlText.getText().toString().equals("")) {
+                    ComickService.getInstance().updateAllComicData();
+                } else {
+                    ComickService.getInstance().downloadComic(binding.downloadUrlText.getText().toString());
+                    binding.downloadUrlText.setText("");
+                }
+            }
+        });
+
+        binding.downloadUrlText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (s.toString().equals("")) {
+                    downloadUrlButton.setText(R.string.update_all_comics);
+                } else {
+                    downloadUrlButton.setText(R.string.download_comic);
+                }
             }
         });
 
         List<ComickService.Comic> comics = ComickService.getInstance().getComics().getValue();
-        ComicListAdapter comicListAdapter = new ComicListAdapter(this, comics, getViewLifecycleOwner());
+        comicListAdapter = new ComicListAdapter(this, new ArrayList<>(comics), getViewLifecycleOwner());
         ListView comicListView = binding.comicList;
         comicListView.setAdapter(comicListAdapter);
         ComickService.getInstance().getComics().observe(getViewLifecycleOwner(), new Observer<List<ComickService.Comic>>() {
@@ -76,6 +108,16 @@ public class OverviewFragment extends Fragment {
         });
 
         return root;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        SharedPreferences.Editor edit = ((MainActivity) getActivity()).getSharedPrefEditor();
+        edit.putString(getString(R.string.last_read_key), null);
+        edit.commit();
+
     }
 
     @Override
@@ -111,6 +153,7 @@ class ComicListAdapter extends ArrayAdapter {
         TextView comicTitleView = (TextView) row.findViewById(R.id.comicTitleView);
         TextView onlineLastChapterView = (TextView) row.findViewById(R.id.onlineLastChapterView);
         TextView downloadedLastChapterView = (TextView) row.findViewById(R.id.downloadedLastChapterView);
+        TextView readingChapterView = (TextView) row.findViewById(R.id.readingChapterView);
         ImageView comicCoverView = (ImageView) row.findViewById(R.id.comicCoverView);
         Button updateButton = (Button) row.findViewById(R.id.updateButton);
         Button readButton = (Button) row.findViewById(R.id.readButton);
@@ -151,6 +194,7 @@ class ComicListAdapter extends ArrayAdapter {
         });
         comicTitleView.setText(comic.getComicTitle());
         onlineLastChapterView.setText(comic.getFormattedLastChapterI());
+        readingChapterView.setText(comic.getCurrentChapterTitle());
 
         comic.getDownloadedLastChapterText().observe(lifecycleOwner, new Observer<String>() {
             @Override

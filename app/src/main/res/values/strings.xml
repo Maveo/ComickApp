@@ -7,10 +7,12 @@
     <string name="menu_overview">Overview</string>
     <string name="menu_reader">Reader</string>
     <string name="download_comic">Download</string>
+    <string name="update_all_comics">Update All</string>
     <string name="chapter_url">Chapter Url</string>
     <string name="online_last_chapter">Online:</string>
     <string name="comic_cover_hint">Cover</string>
     <string name="downloaded_last_chapter">Downloaded:</string>
+    <string name="reading_chapter">Reading:</string>
     <string name="update_comic">Update</string>
     <string name="read">Read</string>
     <string name="lock_rotation">Lock Rotation</string>
@@ -18,8 +20,10 @@
     <string name="exit">Exit</string>
     <string name="lock_rotation_key" translatable="false">lock_rotation_key</string>
     <string name="last_read_key" translatable="false">last_read_key</string>
+    <string name="current_chapter_prefix_key" translatable="false">current_chapter_for_</string>
     <string name="exit_dialog_headline">Confirm exit</string>
     <string name="exit_dialog_sentence">Are you sure you want to quit?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="none">None</string>
 </resources>
