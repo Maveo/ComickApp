@@ -462,6 +462,10 @@ public class ComickService {
                     t[t.length - 1] = currentDownloadChapter;
                     downloadedChapters = t;
 
+                    if (currentChapterIndex == null) {
+                        currentChapterIndex = 0;
+                    }
+
                     downloadedLastChapterI = Double.parseDouble(currentDownloadChapter);
 
                     downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
