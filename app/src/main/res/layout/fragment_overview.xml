@@ -24,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:ems="10"
-                android:hint="@string/first_chapter_url"
+                android:hint="@string/chapter_url"
                 android:inputType="textUri"
                 android:minHeight="48dp" />
 

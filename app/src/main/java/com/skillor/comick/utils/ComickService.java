@@ -27,6 +27,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class ComickService {
@@ -54,7 +56,7 @@ public class ComickService {
         for (File file : this.directory.listFiles()) {
             if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
                 try {
-                    comicList.add(new Comic(file, directory));
+                    comicList.add(new Comic(file));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -78,6 +80,20 @@ public class ComickService {
         return comics;
     }
 
+    public Comic getLastReadComic() {
+        if (comicList.isEmpty()) return null;
+        return comicList.get(0);
+    }
+
+    public Comic getComicByTitle(String title) {
+        for (Comic comic : comicList) {
+            if (comic.getComicTitle().equals(title)) {
+                return comic;
+            }
+        }
+        return null;
+    }
+
     public File getDirectory() {
         return directory;
     }
@@ -89,8 +105,8 @@ public class ComickService {
             public void run() {
                 try {
                     Comic c = new Comic(url);
-                    c.saveInfo(directory);
-                    c.downloadCover(directory);
+                    c.saveInfo();
+                    c.downloadCover();
                     comicList.add(c);
                     comics.postValue(comicList);
                 } catch (Exception e) {
@@ -107,7 +123,7 @@ public class ComickService {
             @Override
             public void run() {
                 try {
-                    comicList.get(position).update(directory);
+                    comicList.get(position).update();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -125,8 +141,9 @@ public class ComickService {
         private Double downloadedLastChapterI = null;
         private String firstChapterId;
         private String lastChapterId;
-        private String[] downloadedChapters;
+        private String[] downloadedChapters = new String[0];
         private final MutableLiveData<String> downloadedLastChapterText = new MutableLiveData<>();
+        private Integer currentChapterIndex = null;
         private String imageUrl;
         private Bitmap coverBitmap;
         private boolean isUpdating = false;
@@ -147,6 +164,10 @@ public class ComickService {
 
         public double getLastChapterI() {
             return lastChapterI;
+        }
+
+        public String getFirstChapterId() {
+            return firstChapterId;
         }
 
         public String getFormattedLastChapterI() {
@@ -174,8 +195,32 @@ public class ComickService {
             return downloadedLastChapterText;
         }
 
+        public String getCurrentChapterTitle() {
+            return downloadedChapters[currentChapterIndex];
+        }
+
+        public String getCurrentChapterPath() {
+            return getChaptersPath() + File.separator + downloadedChapters[currentChapterIndex];
+        }
+
+        public String[] getCurrentChapterImages() {
+            return (new File(getCurrentChapterPath())).list();
+        }
+
+        public void addChapter(int o) {
+            currentChapterIndex += o;
+        }
+
+        public boolean hasNextChapter() {
+            return currentChapterIndex < downloadedChapters.length - 1;
+        }
+
+        public boolean hasPrevChapter() {
+            return currentChapterIndex > 0;
+        }
+
         private Comic(String url) throws Exception {
-            downloadedLastChapterText.setValue(getFormattedDownloadedLastChapterI());
+            downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
 
             this.updateData(url);
         }
@@ -216,7 +261,7 @@ public class ComickService {
             lastChapterId = chapterId(lastChapter);
         }
 
-        private Comic(File file, File directory) throws Exception {
+        private Comic(File file) throws Exception {
             InputStream is = new FileInputStream(file.getAbsolutePath() + File.separator + INFO_FILE);
             int size = is.available();
             byte[] buffer = new byte[size];
@@ -231,44 +276,47 @@ public class ComickService {
             firstChapterId = infos.getString("first_chapter_id");
             lastChapterId = infos.getString("last_chapter_id");
 
-            loadImage(directory);
+            loadImage();
 
-            downloadedChapters = (new File(getChaptersPath(directory))).list();
-            if (downloadedChapters != null) for (String chapter : downloadedChapters) {
-                double parsed = Double.parseDouble(chapter);
-                if (downloadedFirstChapterI == null || parsed < downloadedFirstChapterI) {
-                    downloadedFirstChapterI = parsed;
-                }
-                if (downloadedLastChapterI == null || parsed > downloadedLastChapterI) {
-                    downloadedLastChapterI = parsed;
-                }
+            downloadedChapters = (new File(getChaptersPath())).list();
+            if (downloadedChapters != null) {
+                Arrays.sort(downloadedChapters, new Comparator<String>() {
+                    @Override
+                    public int compare(String o1, String o2) {
+                        return Double.valueOf(o1).compareTo(Double.valueOf(o2));
+                    }
+                });
+                currentChapterIndex = 0;
+                downloadedFirstChapterI = Double.parseDouble(downloadedChapters[0]);
+                downloadedLastChapterI = Double.parseDouble(downloadedChapters[downloadedChapters.length-1]);
+
             }
 
-            downloadedLastChapterText.setValue(getFormattedDownloadedLastChapterI());
+            downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
         }
 
         private String chapterId(JSONObject chapter) throws JSONException {
             return chapter.getString("hid") + "-chapter-" + chapter.getString("chap") + "-" + chapter.getString("lang");
         }
 
-        private String getDirectoryPath(File directory) {
+        private String getDirectoryPath() {
             return directory.getAbsolutePath() + File.separator + comicTitle + COMIC_SUFFIX;
         }
 
-        private String getChaptersPath(File directory) {
-            return getDirectoryPath(directory) + File.separator + CHAPTERS_DIR;
+        private String getChaptersPath() {
+            return getDirectoryPath() + File.separator + CHAPTERS_DIR;
         }
 
-        private String getInfoPath(File directory) {
-            return getDirectoryPath(directory) + File.separator + INFO_FILE;
+        private String getInfoPath() {
+            return getDirectoryPath() + File.separator + INFO_FILE;
         }
 
-        private String getCoverPath(File directory) {
-            return getDirectoryPath(directory) + File.separator + COVER_FILE;
+        private String getCoverPath() {
+            return getDirectoryPath() + File.separator + COVER_FILE;
         }
 
-        public void saveInfo(File directory) throws Exception {
-            File file = new File(getInfoPath(directory));
+        public void saveInfo() throws Exception {
+            File file = new File(getInfoPath());
             file.getParentFile().mkdirs();
 
             JSONObject json = new JSONObject();
@@ -284,15 +332,15 @@ public class ComickService {
             writer.close();
         }
 
-        public void downloadCover(File directory) throws Exception {
-            File file = new File(getCoverPath(directory));
+        public void downloadCover() throws Exception {
+            File file = new File(getCoverPath());
             file.getParentFile().mkdirs();
             downloadImage(imageUrl, file);
-            loadImage(directory);
+            loadImage();
         }
 
-        private void loadImage(File directory) throws FileNotFoundException {
-            coverBitmap = BitmapFactory.decodeStream(new FileInputStream(getCoverPath(directory)));
+        private void loadImage() throws FileNotFoundException {
+            coverBitmap = BitmapFactory.decodeStream(new FileInputStream(getCoverPath()));
         }
 
         private void downloadChapterImage(String imageId, File file) throws Exception {
@@ -307,7 +355,7 @@ public class ComickService {
             throw new Exception("Image not found: " + imageId);
         }
 
-        public void update(File directory) throws Exception {
+        public void update() throws Exception {
             isUpdating = true;
 
             String comicData = request(BASE_URL + comicPath + "/" + firstChapterId);
@@ -342,12 +390,19 @@ public class ComickService {
                     if (!image.isNull("optimized")) {
                         imageId = imageId.substring(0, imageId.lastIndexOf(".")) + "-m.jpg";
                     }
-                    File file = new File(getChaptersPath(directory) + File.separator + currentDownloadChapter + File.separator + String.valueOf(i) + ".jpg");
+                    File file = new File(getChaptersPath() + File.separator + currentDownloadChapter + File.separator + String.valueOf(i) + ".jpg");
                     file.getParentFile().mkdirs();
                     downloadChapterImage(imageId, file);
 
                     downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI() + " - " + String.valueOf((int)((double)i * 100 / images.length())) + "%");
                 }
+
+                String[] t = new String[downloadedChapters.length + 1];
+                for (int i = 0; i < downloadedChapters.length; i++) {
+                    t[i] = downloadedChapters[i];
+                }
+                t[t.length - 1] = currentDownloadChapter;
+                downloadedChapters = t;
 
                 downloadedLastChapterI = Double.parseDouble(currentDownloadChapter);
 

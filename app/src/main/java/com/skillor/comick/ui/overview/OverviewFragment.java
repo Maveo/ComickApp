@@ -18,9 +18,12 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.fragment.NavHostFragment;
 
+import com.skillor.comick.MainActivity;
 import com.skillor.comick.R;
 import com.skillor.comick.databinding.FragmentOverviewBinding;
+import com.skillor.comick.ui.reader.ReaderFragment;
 import com.skillor.comick.utils.ComickService;
 
 import java.util.List;
@@ -56,7 +59,7 @@ public class OverviewFragment extends Fragment {
         });
 
         List<ComickService.Comic> comics = ComickService.getInstance().getComics().getValue();
-        ComicListAdapter comicListAdapter = new ComicListAdapter(getActivity(), ComickService.getInstance().getComics().getValue(), getViewLifecycleOwner());
+        ComicListAdapter comicListAdapter = new ComicListAdapter(this, ComickService.getInstance().getComics().getValue(), getViewLifecycleOwner());
         ListView comicListView = binding.comicList;
         comicListView.setAdapter(comicListAdapter);
         ComickService.getInstance().getComics().observe(getViewLifecycleOwner(), new Observer<List<ComickService.Comic>>() {
@@ -87,12 +90,14 @@ public class OverviewFragment extends Fragment {
 
 class ComicListAdapter extends ArrayAdapter {
     private List<ComickService.Comic> comics;
-    private Activity context;
+    private OverviewFragment fragment;
     private LifecycleOwner lifecycleOwner;
 
-    public ComicListAdapter(Activity context, List<ComickService.Comic> comics, LifecycleOwner lifecycleOwner) {
-        super(context, R.layout.overview_item, comics);
-        this.context = context;
+    public ComicListAdapter(OverviewFragment fragment, List<ComickService.Comic> comics, LifecycleOwner lifecycleOwner) {
+        super((MainActivity)fragment.getActivity(), R.layout.overview_item, comics);
+
+        this.fragment = fragment;
+
         this.lifecycleOwner = lifecycleOwner;
         this.comics = comics;
     }
@@ -104,13 +109,14 @@ class ComicListAdapter extends ArrayAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
-        LayoutInflater inflater = context.getLayoutInflater();
+        LayoutInflater inflater = fragment.getActivity().getLayoutInflater();
         if(convertView==null) row = inflater.inflate(R.layout.overview_item, null, true);
         TextView comicTitleView = (TextView) row.findViewById(R.id.comicTitleView);
         TextView onlineLastChapterView = (TextView) row.findViewById(R.id.onlineLastChapterView);
         TextView downloadedLastChapterView = (TextView) row.findViewById(R.id.downloadedLastChapterView);
         ImageView comicCoverView = (ImageView) row.findViewById(R.id.comicCoverView);
         Button updateButton = (Button) row.findViewById(R.id.updateButton);
+        Button readButton = (Button) row.findViewById(R.id.readButton);
         ProgressBar loadingSpinner = (ProgressBar) row.findViewById(R.id.loadingSpinner);
 
         ComickService.Comic comic = this.comics.get(position);
@@ -122,6 +128,12 @@ class ComicListAdapter extends ArrayAdapter {
             updateButton.setVisibility(View.GONE);
         }
 
+        if (comic.getDownloadedLastChapterI() == null) {
+            readButton.setVisibility(View.GONE);
+        } else {
+            readButton.setVisibility(View.VISIBLE);
+        }
+
 
         updateButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -130,13 +142,21 @@ class ComicListAdapter extends ArrayAdapter {
                 ComicListAdapter.this.notifyDataSetChanged();
             }
         });
+
+        readButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle bundle = new Bundle();
+                bundle.putString("comic_title", comic.getComicTitle());
+                NavHostFragment.findNavController(fragment).navigate(R.id.nav_reader, bundle);
+            }
+        });
         comicTitleView.setText(comic.getComicTitle());
         onlineLastChapterView.setText(comic.getFormattedLastChapterI());
 
         comic.getDownloadedLastChapterText().observe(lifecycleOwner, new Observer<String>() {
             @Override
             public void onChanged(String downloadedLastChapterText) {
-//                downloadedLastChapterView.setText(downloadedLastChapterText);
                 ComicListAdapter.this.notifyDataSetChanged();
 
             }

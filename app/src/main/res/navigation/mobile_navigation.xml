@@ -3,16 +3,16 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@+id/nav_overview">
 
     <fragment
-        android:id="@+id/nav_home"
+        android:id="@+id/nav_overview"
         android:name="com.skillor.comick.ui.overview.OverviewFragment"
         android:label="@string/menu_overview"
         tools:layout="@layout/fragment_overview" />
 
     <fragment
-        android:id="@+id/nav_gallery"
+        android:id="@+id/nav_reader"
         android:name="com.skillor.comick.ui.reader.ReaderFragment"
         android:label="@string/menu_reader"
         tools:layout="@layout/fragment_reader" />
