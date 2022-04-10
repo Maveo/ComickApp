@@ -26,7 +26,9 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:layout_columnSpan="2" />
+            app:layout_column="1"
+            app:layout_columnSpan="4"
+            app:layout_row="0" />
 
         <TextView
             android:id="@+id/textView3"
