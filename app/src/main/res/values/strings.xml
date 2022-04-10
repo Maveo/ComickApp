@@ -5,7 +5,12 @@
     <string name="action_settings">Settings</string>
 
     <string name="menu_overview">Overview</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="download">Download</string>
+    <string name="menu_reader">Reader</string>
+    <string name="download_comic">Download</string>
     <string name="first_chapter_url">First Chapter Url</string>
+    <string name="online_last_chapter">Online:</string>
+    <string name="comic_cover_hint">Cover</string>
+    <string name="downloaded_last_chapter">Downloaded:</string>
+    <string name="update_comic">Update</string>
+    <string name="read">Read</string>
 </resources>

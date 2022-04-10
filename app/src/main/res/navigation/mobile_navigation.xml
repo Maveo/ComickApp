@@ -13,8 +13,8 @@
 
     <fragment
         android:id="@+id/nav_gallery"
-        android:name="com.skillor.comick.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:name="com.skillor.comick.ui.reader.ReaderFragment"
+        android:label="@string/menu_reader"
+        tools:layout="@layout/fragment_reader" />
 
 </navigation>

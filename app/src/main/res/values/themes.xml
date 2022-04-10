@@ -12,11 +12,12 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
-    </style>
-
-    <style name="Theme.Comick.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="Theme.Comick.Fullscreen" parent="Theme.Comick">
+        <item name="android:windowActionBarOverlay">true</item>
     </style>
 
     <style name="Theme.Comick.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />

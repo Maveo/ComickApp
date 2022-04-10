@@ -16,9 +16,10 @@
         android:theme="@style/Theme.Comick">
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Comick.NoActionBar">
+            android:theme="@style/Theme.Comick.Fullscreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
