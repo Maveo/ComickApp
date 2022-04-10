@@ -35,8 +35,6 @@ public class ReaderFragment extends Fragment {
 
         readerWebView = binding.readerWebview;
 
-        ((MainActivity)getActivity()).hideNavbar();
-
         readerWebView.getSettings().setAllowFileAccess(true);
         readerWebView.getSettings().setJavaScriptEnabled(true);
 
@@ -58,7 +56,7 @@ public class ReaderFragment extends Fragment {
                 @Override
                 public boolean onSingleTapConfirmed(MotionEvent e) {
                     if (!ignoreNextTap) {
-                        ((MainActivity)getActivity()).triggerSystemUI();
+                        ((MainActivity)getActivity()).triggerUI();
                     }
                     ignoreNextTap = false;
                     return super.onSingleTapConfirmed(e);

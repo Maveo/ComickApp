@@ -73,6 +73,15 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void triggerUI() {
+        triggerSystemUI();
+        if (systemUIHidden) {
+            hideNavbar();
+        } else {
+            showNavbar();
+        }
+    }
+
     public void hideNavbar() {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
