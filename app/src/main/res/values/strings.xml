@@ -17,6 +17,7 @@
     <string name="unlock_rotation">Unlock Rotation</string>
     <string name="exit">Exit</string>
     <string name="lock_rotation_key" translatable="false">lock_rotation_key</string>
+    <string name="last_read_key" translatable="false">last_read_key</string>
     <string name="exit_dialog_headline">Confirm exit</string>
     <string name="exit_dialog_sentence">Are you sure you want to quit?</string>
     <string name="yes">Yes</string>

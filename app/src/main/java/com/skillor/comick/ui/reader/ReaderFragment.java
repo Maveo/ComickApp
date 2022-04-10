@@ -1,5 +1,7 @@
 package com.skillor.comick.ui.reader;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
@@ -18,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.skillor.comick.MainActivity;
+import com.skillor.comick.R;
 import com.skillor.comick.databinding.FragmentReaderBinding;
 import com.skillor.comick.utils.ComickService;
 
@@ -85,6 +88,10 @@ public class ReaderFragment extends Fragment {
         } else {
             comic = ComickService.getInstance().getLastReadComic();
         }
+
+        SharedPreferences.Editor edit = ((MainActivity) getActivity()).getSharedPrefEditor();
+        edit.putString(getString(R.string.last_read_key), comic.getComicTitle());
+        edit.commit();
 
         refreshWebview();
 

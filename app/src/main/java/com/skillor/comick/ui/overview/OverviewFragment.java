@@ -1,6 +1,5 @@
 package com.skillor.comick.ui.overview;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,16 +17,14 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.Navigation;
 
 import com.skillor.comick.MainActivity;
 import com.skillor.comick.R;
 import com.skillor.comick.databinding.FragmentOverviewBinding;
-import com.skillor.comick.ui.reader.ReaderFragment;
 import com.skillor.comick.utils.ComickService;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 
 public class OverviewFragment extends Fragment {
 
@@ -59,7 +56,7 @@ public class OverviewFragment extends Fragment {
         });
 
         List<ComickService.Comic> comics = ComickService.getInstance().getComics().getValue();
-        ComicListAdapter comicListAdapter = new ComicListAdapter(this, ComickService.getInstance().getComics().getValue(), getViewLifecycleOwner());
+        ComicListAdapter comicListAdapter = new ComicListAdapter(this, comics, getViewLifecycleOwner());
         ListView comicListView = binding.comicList;
         comicListView.setAdapter(comicListAdapter);
         ComickService.getInstance().getComics().observe(getViewLifecycleOwner(), new Observer<List<ComickService.Comic>>() {
@@ -148,7 +145,8 @@ class ComicListAdapter extends ArrayAdapter {
             public void onClick(View v) {
                 Bundle bundle = new Bundle();
                 bundle.putString("comic_title", comic.getComicTitle());
-                NavHostFragment.findNavController(fragment).navigate(R.id.nav_reader, bundle);
+                Navigation.findNavController(v).popBackStack();
+                Navigation.findNavController(v).navigate(R.id.nav_reader, bundle);
             }
         });
         comicTitleView.setText(comic.getComicTitle());

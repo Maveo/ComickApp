@@ -94,19 +94,29 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navigationView = binding.navView;
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_overview, R.id.nav_reader)
-                .setOpenableLayout(drawer)
-                .build();
+        mAppBarConfiguration = new AppBarConfiguration.Builder(R.id.nav_overview, R.id.nav_reader).setOpenableLayout(drawer).build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
         ComickService.getInstance().initialize(getApplicationContext().getExternalFilesDir(null));
+
+        String lastRead = sharedPref.getString(getString(R.string.last_read_key), null);
+        if (lastRead != null) {
+            Bundle bundle = new Bundle();
+            bundle.putString("comic_title", lastRead);
+            navController.popBackStack();
+            navController.navigate(R.id.nav_reader, bundle);
+        }
+
     }
 
-    public void exitApplication(View view) {
-        confirmExit();
+    public SharedPreferences getSharedPref() {
+        return sharedPref;
+    }
+
+    public SharedPreferences.Editor getSharedPrefEditor() {
+        return sharedPrefEditor;
     }
 
     @Override
