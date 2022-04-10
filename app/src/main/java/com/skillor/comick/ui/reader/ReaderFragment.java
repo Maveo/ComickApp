@@ -97,26 +97,33 @@ public class ReaderFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        ((MainActivity)getActivity()).showSystemUI();
         super.onDestroyView();
         binding = null;
     }
 
     private String createHtml() {
         StringBuilder builder = new StringBuilder();
+        builder.append("<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><title>Comick</title><style type=\"text/css\">html, body {width: 100%; height: 100%; margin: 0;}.outer-container {display: flex;justify-content: center;}.inner-container {max-width: 500px;display: flex;flex-direction: column;}#images-container {display: flex;flex-direction: column;}a {border-radius: 4px;background: #4479BA;color: #FFF;padding: 8px 12px;text-decoration: none;}.left {float: left;}.right {float: right;}img {width: 100%;}</style></head><body><div class=\"outer-container\"><div class=\"inner-container\"><div>");
+        if (comic.hasPrevChapter()) {
+            builder.append("<a class=\"left\" href=\"prev_chapter\">Prev Chapter</a>");
+        }
+        if (comic.hasNextChapter()) {
+            builder.append("<a class=\"right\" href=\"next_chapter\">Next Chapter</a>");
+        }
+        builder.append("</div><h1>Chapter ").append(comic.getCurrentChapterTitle()).append("</h1><div id=\"images-container\">");
         for (String img: comic.getCurrentChapterImages()) {
             builder.append("<img src=\"");
             builder.append(img);
             builder.append("\">");
         }
-        return "<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><title>Comick</title><style type=\"text/css\">html, body {width: 100%; height: 100%; margin: 0;}.outer-container {display: flex;justify-content: center;}.inner-container {max-width: 500px;display: flex;flex-direction: column;}#images-container {display: flex;flex-direction: column;}a {border-radius: 4px;background: #4479BA;color: #FFF;padding: 8px 12px;text-decoration: none;}.left {float: left;}.right {float: right;}img {width: 100%;}</style></head><body><div class=\"outer-container\"><div class=\"inner-container\"><div>" +
-                (comic.hasPrevChapter() ? "<a class=\"left\" href=\"prev_chapter\">Prev Chapter</a>" : "") +
-                (comic.hasNextChapter() ? "<a class=\"right\" href=\"next_chapter\">Next Chapter</a>" : "") +
-                "</div><h1>Chapter "+comic.getCurrentChapterTitle()+"</h1><div id=\"images-container\">" +
-                builder.toString() +
-                "</div><h1>Chapter "+comic.getCurrentChapterTitle()+"</h1><div>" +
-                (comic.hasPrevChapter() ? "<a class=\"left\" href=\"prev_chapter\">Prev Chapter</a>" : "") +
-                (comic.hasNextChapter() ? "<a class=\"right\" href=\"next_chapter\">Next Chapter</a>" : "") +
-                "</div></div></div></body></html>";
+        builder.append("</div><h1>Chapter ").append(comic.getCurrentChapterTitle()).append("</h1><div>");
+        if (comic.hasPrevChapter()) {
+            builder.append("<a class=\"left\" href=\"prev_chapter\">Prev Chapter</a>");
+        }
+        if (comic.hasNextChapter()) {
+            builder.append("<a class=\"right\" href=\"next_chapter\">Next Chapter</a>");
+        }
+        builder.append("</div></div></div></body></html>");
+        return builder.toString();
     }
 }
