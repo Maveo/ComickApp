@@ -1,11 +1,18 @@
 package com.skillor.comick;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Menu;
+import android.widget.Button;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
@@ -29,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean systemUIHidden = false;
 
+    private boolean rotationLocked = false;
+
+    private SharedPreferences sharedPref;
+    private SharedPreferences.Editor sharedPrefEditor;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,6 +49,27 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.appBarMain.toolbar);
+
+        sharedPref = getPreferences(Context.MODE_PRIVATE);
+        sharedPrefEditor = sharedPref.edit();
+
+        rotationLocked = sharedPref.getBoolean(getString(R.string.lock_rotation_key), false);
+        setRotationLock();
+
+        binding.lockRotationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rotationLocked = !rotationLocked;
+                setRotationLock();
+            }
+        });
+
+        binding.exitButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                confirmExit();
+            }
+        });
 
         DrawerLayout drawer = binding.drawerLayout;
         drawer.addDrawerListener(new DrawerLayout.DrawerListener() {
@@ -70,7 +103,70 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupWithNavController(navigationView, navController);
 
         ComickService.getInstance().initialize(getApplicationContext().getExternalFilesDir(null));
+    }
 
+    public void exitApplication(View view) {
+        confirmExit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        confirmExit();
+    }
+
+    private void confirmExit() {
+        AlertDialog.Builder ab = new AlertDialog.Builder(MainActivity.this);
+        ab.setTitle(getString(R.string.exit_dialog_headline));
+        ab.setMessage(getString(R.string.exit_dialog_sentence));
+        ab.setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                finish();
+            }
+        });
+        ab.setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        ab.setOnKeyListener(new DialogInterface.OnKeyListener() {
+            @Override
+            public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+                if (keyCode == KeyEvent.KEYCODE_BACK) {
+                    dialog.dismiss();
+                    finish();
+                }
+                return true;
+            }
+        });
+
+        ab.show();
+    }
+
+    private void setRotationLock() {
+        if (rotationLocked) {
+            lockRotation();
+        } else {
+            unlockRotation();
+        }
+    }
+
+    private void lockRotation() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LOCKED);
+        rotationLocked = true;
+        sharedPrefEditor.putBoolean(getString(R.string.lock_rotation_key), rotationLocked);
+        sharedPrefEditor.apply();
+        ((Button) findViewById(R.id.lockRotationButton)).setText(R.string.unlock_rotation);
+    }
+
+    private void unlockRotation() {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+        rotationLocked = false;
+        sharedPrefEditor.putBoolean(getString(R.string.lock_rotation_key), rotationLocked);
+        sharedPrefEditor.apply();
+        ((Button) findViewById(R.id.lockRotationButton)).setText(R.string.lock_rotation);
     }
 
     public void triggerUI() {

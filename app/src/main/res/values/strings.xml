@@ -13,4 +13,12 @@
     <string name="downloaded_last_chapter">Downloaded:</string>
     <string name="update_comic">Update</string>
     <string name="read">Read</string>
+    <string name="lock_rotation">Lock Rotation</string>
+    <string name="unlock_rotation">Unlock Rotation</string>
+    <string name="exit">Exit</string>
+    <string name="lock_rotation_key" translatable="false">lock_rotation_key</string>
+    <string name="exit_dialog_headline">Confirm exit</string>
+    <string name="exit_dialog_sentence">Are you sure you want to quit?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>
