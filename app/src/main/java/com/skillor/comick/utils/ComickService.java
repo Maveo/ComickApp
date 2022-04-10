@@ -93,6 +93,10 @@ public class ComickService {
 
     public Comic getLastReadComic() {
         if (comicList.isEmpty()) return null;
+        String lastRead = activity.getSharedPref().getString(activity.getString(R.string.last_read_key), null);
+        if (lastRead != null) {
+            return getComicByTitle(lastRead);
+        }
         return comicList.get(0);
     }
 

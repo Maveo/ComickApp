@@ -1,6 +1,5 @@
 package com.skillor.comick.ui.overview;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -108,16 +107,6 @@ public class OverviewFragment extends Fragment {
         });
 
         return root;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        SharedPreferences.Editor edit = ((MainActivity) getActivity()).getSharedPrefEditor();
-        edit.putString(getString(R.string.last_read_key), null);
-        edit.commit();
-
     }
 
     @Override
