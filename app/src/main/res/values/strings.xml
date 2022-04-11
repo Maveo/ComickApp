@@ -30,6 +30,6 @@
 
     <string name="files_header">Files</string>
 
-    <string name="use_internal_files_title">Use Internal Storage for data</string>
+    <string name="use_internal_files_title">Use External Storage for data</string>
     <string name="external_file_path">External file directory</string>
 </resources>
