@@ -19,6 +19,11 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 11
+      - name: Bump App version
+        run: |
+         chmod +x ./bump_version.sh
+         ./bump_version.sh ${{ github.event.release.tag_name }}
+        shell: bash
       - name: Build APK
         run: bash ./gradlew assembleDebug --stacktrace
       - name: Rename APK
@@ -30,3 +35,11 @@ jobs:
           files: app/build/outputs/apk/debug/comick.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit bumped version
+        run: |
+          git config --global user.email "skillor@gmx.de"
+          git config --global user.name "Release Runner"
+          git add --force ./app/build.gradle
+          git commit -am "Bump release version"
+          git tag -fa ${{ github.event.release.tag_name }} -m "Bump to version ${{ github.event.release.tag_name }}"
+          git push origin HEAD:master --tags --force
