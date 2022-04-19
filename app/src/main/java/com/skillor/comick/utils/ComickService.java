@@ -2,6 +2,7 @@ package com.skillor.comick.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -55,25 +56,30 @@ public class ComickService {
         comics.setValue(new ArrayList<>());
     }
 
-    private void initialize() {
+    public void initialize() {
         if (directory == null) return;
         comicList.clear();
-        for (File file : this.directory.listFiles()) {
-            if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
-                try {
-                    comicList.add(new Comic(file));
-                } catch (Exception e) {
-                    e.printStackTrace();
+        File[] files = this.directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
+                    try {
+                        comicList.add(new Comic(file));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         }
         comics.postValue(comicList);
     }
 
-    public void initialize(MainActivity activity) {
+    public void setActivity(MainActivity activity) {
         this.activity = activity;
-        this.directory = activity.getApplicationContext().getExternalFilesDir(null);
-        initialize();
+    }
+
+    public void setDirectory(File directory) {
+        this.directory = directory;
     }
 
     public static ComickService getInstance() {
@@ -376,7 +382,8 @@ public class ComickService {
 
         public void saveInfo() throws Exception {
             File file = new File(getInfoPath());
-            file.getParentFile().mkdirs();
+            boolean res = file.getParentFile().mkdirs();
+            Log.d("test", String.valueOf(res));
 
             JSONObject json = new JSONObject();
             json.put("comic_title", comicTitle);

@@ -1,13 +1,14 @@
 package com.skillor.comick;
 
+import android.Manifest;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.KeyEvent;
-import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 
@@ -18,10 +19,13 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.navigation.NavigationView;
 import com.skillor.comick.databinding.ActivityMainBinding;
 import com.skillor.comick.utils.ComickService;
+
+import java.io.File;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -45,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.appBarMain.toolbar);
 
-        sharedPref = getPreferences(Context.MODE_PRIVATE);
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         sharedPrefEditor = sharedPref.edit();
 
         rotationLocked = sharedPref.getBoolean(getString(R.string.lock_rotation_key), false);
@@ -94,7 +98,8 @@ public class MainActivity extends AppCompatActivity {
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
-        ComickService.getInstance().initialize(this);
+        ComickService.getInstance().setActivity(this);
+        this.loadDirectory();
 
         String lastRead = sharedPref.getString(getString(R.string.last_read_key), null);
         if (lastRead != null) {
@@ -112,6 +117,54 @@ public class MainActivity extends AppCompatActivity {
 
     public SharedPreferences.Editor getSharedPrefEditor() {
         return sharedPrefEditor;
+    }
+
+    private boolean hasPermissions(String[] permisssions) {
+        if (Build.VERSION.SDK_INT < 23) return true;
+        for (String permission: permisssions) {
+            if (checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) return false;
+        }
+        return true;
+    }
+
+    public void loadDirectory() {
+        boolean useExternalFiles = sharedPref.getBoolean(getString(R.string.use_external_files_key), false);
+
+        if (useExternalFiles) {
+            String externalFilePath = sharedPref.getString(getString(R.string.external_file_path_key), null);
+            if (externalFilePath == null) {
+                sharedPrefEditor.putBoolean(getString(R.string.use_external_files_key), false);
+                sharedPrefEditor.apply();
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= 23) {
+                String[] permissions = {
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                };
+                if (Build.VERSION.SDK_INT >= 30) {
+                    permissions = new String[]{
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.MANAGE_EXTERNAL_STORAGE
+                    };
+                }
+
+                if (!hasPermissions(permissions)) {
+                    requestPermissions(permissions, 1);
+                }
+            }
+            File externalFile = new File(externalFilePath);
+            if (!externalFile.isDirectory()) {
+                sharedPrefEditor.putBoolean(getString(R.string.use_external_files_key), false);
+                sharedPrefEditor.apply();
+                return;
+            }
+            ComickService.getInstance().setDirectory(externalFile);
+        } else {
+            ComickService.getInstance().setDirectory(getApplicationContext().getExternalFilesDir(null));
+        }
+        ComickService.getInstance().initialize();
     }
 
     @Override

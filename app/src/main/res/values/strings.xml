@@ -22,6 +22,8 @@
     <string name="lock_rotation_key" translatable="false">lock_rotation_key</string>
     <string name="last_read_key" translatable="false">last_read_key</string>
     <string name="current_chapter_prefix_key" translatable="false">current_chapter_for_</string>
+    <string name="external_file_path_key" translatable="false">external_file_path</string>
+    <string name="use_external_files_key" translatable="false">use_external_files</string>
     <string name="exit_dialog_headline">Confirm exit</string>
     <string name="exit_dialog_sentence">Are you sure you want to quit?</string>
     <string name="yes">Yes</string>
@@ -30,6 +32,6 @@
 
     <string name="files_header">Files</string>
 
-    <string name="use_internal_files_title">Use External Storage for data</string>
-    <string name="external_file_path">External file directory</string>
+    <string name="use_external_files_title">Use External Storage for data</string>
+    <string name="external_file_path_title">External file directory</string>
 </resources>
