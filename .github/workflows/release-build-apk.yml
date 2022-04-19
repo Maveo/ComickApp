@@ -37,7 +37,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit bumped version
         run: |
-          git config --global user.email "skillor@gmx.de"
+          git config --global user.email "skillor@gmx.net"
           git config --global user.name "Release Runner"
           git add --force ./app/build.gradle
           git commit -am "Bump release version"
