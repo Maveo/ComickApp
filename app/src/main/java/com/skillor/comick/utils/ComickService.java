@@ -382,8 +382,7 @@ public class ComickService {
 
         public void saveInfo() throws Exception {
             File file = new File(getInfoPath());
-            boolean res = file.getParentFile().mkdirs();
-            Log.d("test", String.valueOf(res));
+            file.getParentFile().mkdirs();
 
             JSONObject json = new JSONObject();
             json.put("comic_title", comicTitle);
