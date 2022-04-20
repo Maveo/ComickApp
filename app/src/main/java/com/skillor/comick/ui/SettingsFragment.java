@@ -2,11 +2,11 @@ package com.skillor.comick.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
@@ -21,21 +21,20 @@ public class SettingsFragment extends PreferenceFragmentCompat {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         SharedPreferences.OnSharedPreferenceChangeListener listener = new SharedPreferences.OnSharedPreferenceChangeListener() {
             public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
                 if (key.equals(getString(R.string.use_external_files_key))) {
-                    ((MainActivity) getActivity()).loadDirectory();
+                    ((MainActivity) requireActivity()).loadDirectory();
                     refreshScreen();
                 } else if (key.equals(getString(R.string.external_file_path_key))) {
-                    ((MainActivity) getActivity()).loadDirectory();
+                    ((MainActivity) requireActivity()).loadDirectory();
                     refreshScreen();
                 }
             }
         };
 
-        PreferenceManager.getDefaultSharedPreferences(getActivity()).registerOnSharedPreferenceChangeListener(listener);
+        PreferenceManager.getDefaultSharedPreferences(requireActivity()).registerOnSharedPreferenceChangeListener(listener);
 
         return super.onCreateView(inflater, container, savedInstanceState);
     }

@@ -11,12 +11,12 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
 import androidx.navigation.Navigation;
 
-import com.skillor.comick.MainActivity;
 import com.skillor.comick.R;
 import com.skillor.comick.databinding.FragmentOverviewBinding;
 import com.skillor.comick.utils.ComickService;
@@ -30,7 +30,7 @@ public class OverviewFragment extends Fragment {
 
     private ComicListAdapter comicListAdapter;
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentOverviewBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -125,7 +125,7 @@ class ComicListAdapter extends ArrayAdapter {
     private LifecycleOwner lifecycleOwner;
 
     public ComicListAdapter(OverviewFragment fragment, List<ComickService.Comic> comics, LifecycleOwner lifecycleOwner) {
-        super((MainActivity)fragment.getActivity(), R.layout.overview_item, comics);
+        super(fragment.requireActivity(), R.layout.overview_item, comics);
 
         this.fragment = fragment;
 
@@ -140,7 +140,7 @@ class ComicListAdapter extends ArrayAdapter {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
-        LayoutInflater inflater = fragment.getActivity().getLayoutInflater();
+        LayoutInflater inflater = fragment.requireActivity().getLayoutInflater();
         if(convertView==null) row = inflater.inflate(R.layout.overview_item, null, true);
         TextView comicTitleView = row.findViewById(R.id.comicTitleView);
         TextView onlineLastChapterView = row.findViewById(R.id.onlineLastChapterView);

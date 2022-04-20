@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
@@ -29,7 +30,7 @@ public class ReaderFragment extends Fragment {
 
     private ComickService.Comic comic;
 
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentReaderBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -88,7 +89,7 @@ public class ReaderFragment extends Fragment {
             return root;
         }
 
-        SharedPreferences.Editor edit = ((MainActivity) getActivity()).getSharedPrefEditor();
+        SharedPreferences.Editor edit = ((MainActivity) requireActivity()).getSharedPrefEditor();
         edit.putString(getString(R.string.last_read_key), comic.getComicTitle());
         edit.commit();
 
