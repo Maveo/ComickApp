@@ -371,6 +371,9 @@ public class ComickService {
             JSONObject comicInfo = chapter.getJSONObject("pageProps").getJSONObject("chapter").getJSONObject("md_comics");
             comicTitle = comicInfo.getString("title");
             imageUrl = comicInfo.getJSONArray("md_covers").getJSONObject(0).getString("gpurl");
+            if (imageUrl.equals("null")) {
+                imageUrl = comicInfo.getJSONArray("md_covers").getJSONObject(0).getString("b2key");
+            }
 
             JSONArray chapters = chapter.getJSONObject("pageProps").getJSONArray("chapters");
             JSONObject firstChapter = chapters.getJSONObject(0);
@@ -473,14 +476,32 @@ public class ComickService {
         public void downloadCover() throws Exception {
             File file = new File(getCoverPath());
             file.getParentFile().mkdirs();
-            downloadImage(imageUrl, file);
+            downloadCoverImage(new FileOutputStream(file));
             loadImage();
         }
 
         public void cacheCover() throws Exception {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
-            downloadImage(imageUrl, out);
+            downloadCoverImage(out);
             coverBitmap = BitmapFactory.decodeStream(new ByteArrayInputStream(out.toByteArray()));
+        }
+
+        private void downloadCoverImage(OutputStream out) throws Exception {
+            try {
+                downloadImage(imageUrl, out);
+                return;
+            } catch (Exception ignored) {
+
+            }
+            for (String baseUrl : BASE_IMAGE_URLS) {
+                try {
+                    downloadImage(baseUrl + imageUrl, out);
+                    return;
+                } catch (Exception ignored) {
+
+                }
+            }
+            throw new Exception("Cover Image not found: " + imageUrl);
         }
 
         private void loadImage() throws FileNotFoundException {
@@ -490,7 +511,7 @@ public class ComickService {
         private void downloadChapterImage(String imageId, File file) throws Exception {
             for (String baseUrl : BASE_IMAGE_URLS) {
                 try {
-                    downloadImage(baseUrl + imageId, file);
+                    downloadImage(baseUrl + imageId, new FileOutputStream(file));
                     return;
                 } catch (Exception ignored) {
 
@@ -567,10 +588,6 @@ public class ComickService {
             this.isUpdating = false;
             downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
         }
-    }
-
-    public void downloadImage(String url, File file) throws IOException {
-        downloadImage(url, new FileOutputStream(file), 1024);
     }
 
     public void downloadImage(String url, OutputStream out) throws IOException {
