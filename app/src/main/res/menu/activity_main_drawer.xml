@@ -5,6 +5,9 @@
 
     <group android:checkableBehavior="single">
         <item
+            android:id="@+id/nav_download"
+            android:title="@string/menu_download" />
+        <item
             android:id="@+id/nav_overview"
             android:title="@string/menu_overview" />
         <item

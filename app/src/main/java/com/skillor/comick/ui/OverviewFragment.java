@@ -40,47 +40,13 @@ public class OverviewFragment extends Fragment {
         binding = FragmentOverviewBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView downloadUrlErrorText = binding.downloadUrlErrorText;
-        ComickService.getInstance().getErrorText().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String s) {
-                downloadUrlErrorText.setText(s);
-            }
-        });
-
-        Button downloadUrlButton = binding.downloadUrlButton;
+        Button downloadUrlButton = binding.updateAllButton;
         downloadUrlButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                if (binding.downloadUrlText.getText().toString().equals("")) {
-                    ComickService.getInstance().updateAllComicData();
-                } else {
-                    ComickService.getInstance().downloadComic(binding.downloadUrlText.getText().toString());
-                    binding.downloadUrlText.setText("");
-                }
-            }
-        });
-
-        binding.downloadUrlText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                if (s.toString().equals("")) {
-                    downloadUrlButton.setText(R.string.update_all_comics);
-                } else {
-                    downloadUrlButton.setText(R.string.download_comic);
-                }
+                ComickService.getInstance().updateAllComicData();
             }
         });
 
@@ -94,13 +60,6 @@ public class OverviewFragment extends Fragment {
                 comicListAdapter.getComics().clear();
                 comicListAdapter.getComics().addAll(comics);
                 comicListAdapter.notifyDataSetChanged();
-            }
-        });
-
-        comicListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                Log.d("Click", String.valueOf(position));
             }
         });
 

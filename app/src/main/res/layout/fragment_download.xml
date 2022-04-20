@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.OverviewFragment">
+    tools:context=".ui.DownloadFragment">
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -19,17 +19,27 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal">
 
-            <Button
-                android:id="@+id/updateAllButton"
+            <EditText
+                android:id="@+id/downloadUrlText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/update_all_comics" />
+                android:layout_weight="1"
+                android:ems="10"
+                android:hint="@string/chapter_url"
+                android:inputType="textUri"
+                android:minHeight="48dp" />
+
+            <Button
+                android:id="@+id/downloadUrlButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/download_comic" />
 
         </LinearLayout>
 
-        <ListView
-            android:id="@+id/comicList"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/downloadUrlErrorText"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
     </LinearLayout>

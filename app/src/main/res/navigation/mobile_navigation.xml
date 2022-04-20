@@ -6,6 +6,12 @@
     app:startDestination="@+id/nav_overview">
 
     <fragment
+        android:id="@+id/nav_download"
+        android:name="com.skillor.comick.ui.DownloadFragment"
+        android:label="@string/menu_download"
+        tools:layout="@layout/fragment_download" />
+
+    <fragment
         android:id="@+id/nav_overview"
         android:name="com.skillor.comick.ui.OverviewFragment"
         android:label="@string/menu_overview"
