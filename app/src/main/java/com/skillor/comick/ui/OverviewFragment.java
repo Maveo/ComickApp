@@ -1,13 +1,9 @@
 package com.skillor.comick.ui;
 
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -18,7 +14,6 @@ import android.widget.TextView;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.skillor.comick.MainActivity;
@@ -40,8 +35,7 @@ public class OverviewFragment extends Fragment {
         binding = FragmentOverviewBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        Button downloadUrlButton = binding.updateAllButton;
-        downloadUrlButton.setOnClickListener(new View.OnClickListener()
+        binding.updateAllButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
@@ -60,6 +54,58 @@ public class OverviewFragment extends Fragment {
                 comicListAdapter.getComics().clear();
                 comicListAdapter.getComics().addAll(comics);
                 comicListAdapter.notifyDataSetChanged();
+            }
+        });
+
+        binding.sortAZButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (ComickService.getInstance().getSortedValue() == ComickService.SORTED_AZ_ASC) {
+                    ComickService.getInstance().setSorted(ComickService.SORTED_AZ_DESC);
+                } else {
+                    ComickService.getInstance().setSorted(ComickService.SORTED_AZ_ASC);
+                }
+            }
+        });
+
+        binding.sortAddedButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (ComickService.getInstance().getSortedValue() == ComickService.SORTED_ADDED_DESC) {
+                    ComickService.getInstance().setSorted(ComickService.SORTED_ADDED_ASC);
+                } else {
+                    ComickService.getInstance().setSorted(ComickService.SORTED_ADDED_DESC);
+                }
+            }
+        });
+
+        ComickService.getInstance().getSorted().observe(getViewLifecycleOwner(), new Observer<Integer>() {
+            @Override
+            public void onChanged(Integer sorted) {
+                if (sorted != null) {
+                    switch (sorted) {
+                        case ComickService.SORTED_AZ_DESC:
+                            binding.sortAZButton.setText(R.string.sort_za);
+                            binding.sortAZButton.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.arrow_up_float, 0, 0, 0);
+                            break;
+                        case ComickService.SORTED_AZ_ASC:
+                            binding.sortAZButton.setText(R.string.sort_az);
+                            binding.sortAZButton.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.arrow_down_float, 0, 0, 0);
+                            break;
+                        case ComickService.SORTED_ADDED_ASC:
+                            binding.sortAddedButton.setText(R.string.sort_added);
+                            binding.sortAddedButton.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.arrow_up_float, 0, 0, 0);
+                            break;
+                        default:
+                            binding.sortAddedButton.setText(R.string.sort_added);
+                            binding.sortAddedButton.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.arrow_down_float, 0, 0, 0);
+                            break;
+                    }
+                }
             }
         });
 
@@ -96,16 +142,16 @@ class ComicListAdapter extends ArrayAdapter {
         View row = convertView;
         LayoutInflater inflater = fragment.getActivity().getLayoutInflater();
         if(convertView==null) row = inflater.inflate(R.layout.overview_item, null, true);
-        TextView comicTitleView = (TextView) row.findViewById(R.id.comicTitleView);
-        TextView onlineLastChapterView = (TextView) row.findViewById(R.id.onlineLastChapterView);
-        TextView downloadedLastChapterView = (TextView) row.findViewById(R.id.downloadedLastChapterView);
-        TextView readingChapterView = (TextView) row.findViewById(R.id.readingChapterView);
-        ImageView comicCoverView = (ImageView) row.findViewById(R.id.comicCoverView);
-        Button updateButton = (Button) row.findViewById(R.id.updateButton);
-        Button readButton = (Button) row.findViewById(R.id.readButton);
-        ProgressBar loadingSpinner = (ProgressBar) row.findViewById(R.id.loadingSpinner);
+        TextView comicTitleView = row.findViewById(R.id.comicTitleView);
+        TextView onlineLastChapterView = row.findViewById(R.id.onlineLastChapterView);
+        TextView downloadedLastChapterView = row.findViewById(R.id.downloadedLastChapterView);
+        TextView readingChapterView = row.findViewById(R.id.readingChapterView);
+        ImageView comicCoverView = row.findViewById(R.id.comicCoverView);
+        Button updateButton = row.findViewById(R.id.updateButton);
+        Button readButton = row.findViewById(R.id.readButton);
+        ProgressBar loadingSpinner = row.findViewById(R.id.loadingSpinner);
 
-        ComickService.Comic comic = this.comics.get(position);
+        ComickService.Comic comic = getComics().get(position);
 
         updateButton.setVisibility(View.VISIBLE);
         loadingSpinner.setVisibility(View.GONE);

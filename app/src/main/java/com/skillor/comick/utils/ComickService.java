@@ -2,7 +2,6 @@ package com.skillor.comick.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -17,6 +16,8 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,13 +33,14 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 public class ComickService {
     private static ComickService INSTANCE;
 
-    private final MutableLiveData<String> errorText = new MutableLiveData<>();
+    private final MutableLiveData<Exception> error = new MutableLiveData<>();
     private final List<Comic> comicList = new ArrayList<>();
     private final MutableLiveData<List<Comic>> comics = new MutableLiveData<>();
 
@@ -52,8 +54,16 @@ public class ComickService {
     private final static String CHAPTERS_DIR = "chapters";
     private final static String COMIC_SUFFIX = ".comic";
 
+    public static final int SORTED_AZ_ASC = 1;
+    public static final int SORTED_AZ_DESC = 2;
+    public static final int SORTED_ADDED_ASC = 3;
+    public static final int SORTED_ADDED_DESC = 4;
+
+    private final MutableLiveData<Integer> sorted = new MutableLiveData<>();
+
     private ComickService() {
         comics.setValue(new ArrayList<>());
+        sorted.setValue(SORTED_ADDED_DESC);
     }
 
     public void initialize() {
@@ -71,7 +81,7 @@ public class ComickService {
                 }
             }
         }
-        comics.postValue(comicList);
+        postComics(comicList);
     }
 
     public void setActivity(MainActivity activity) {
@@ -82,6 +92,22 @@ public class ComickService {
         this.directory = directory;
     }
 
+    public LiveData<Integer> getSorted() {
+        return sorted;
+    }
+
+    public int getSortedValue() {
+        if (sorted.getValue() == null) {
+            return SORTED_ADDED_DESC;
+        }
+        return sorted.getValue();
+    }
+
+    public void setSorted(int sorted) {
+        this.sorted.setValue(sorted);
+        postComics(comicList);
+    }
+
     public static ComickService getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new ComickService();
@@ -89,8 +115,30 @@ public class ComickService {
         return INSTANCE;
     }
 
-    public LiveData<String> getErrorText() {
-        return errorText;
+    public LiveData<Exception> getError() {
+        return error;
+    }
+
+    private void postComics(List<Comic> comics) {
+        Integer sorted = this.sorted.getValue();
+        if (sorted != null) {
+            Collections.sort(comics, new Comparator<Comic>() {
+                @Override
+                public int compare(Comic c1, Comic c2) {
+                    switch (sorted) {
+                        case SORTED_AZ_DESC:
+                            return c2.getComicTitle().compareTo(c1.getComicTitle());
+                        case SORTED_AZ_ASC:
+                            return c1.getComicTitle().compareTo(c2.getComicTitle());
+                        case SORTED_ADDED_ASC:
+                            return c1.getLastModified().compareTo(c2.getLastModified());
+                        default:
+                            return c2.getLastModified().compareTo(c1.getLastModified());
+                    }
+                }
+            });
+        }
+        this.comics.postValue(comics);
     }
 
     public LiveData<List<Comic>> getComics() {
@@ -119,8 +167,10 @@ public class ComickService {
         return directory;
     }
 
-    public void downloadComic(String url) {
-        errorText.postValue("");
+    public LiveData<Comic> cacheComic(String url) {
+        MutableLiveData<Comic> cachedComic = new MutableLiveData<>();
+        cachedComic.setValue(null);
+        error.postValue(null);
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -128,16 +178,33 @@ public class ComickService {
                     Comic c = new Comic(url);
                     for (Comic comic : comicList) {
                         if (comic.getComicTitle().equals(c.getComicTitle())) {
-                            errorText.postValue("Comic already exists: " + c.getComicTitle());
+                            error.postValue(new Exception("Comic already exists: " + c.getComicTitle()));
                             return;
                         }
                     }
+                    c.cacheCover();
+                    cachedComic.postValue(c);
+                } catch (Exception e) {
+                    error.postValue(e);
+                    e.printStackTrace();
+                }
+            }
+        };
+        new Thread(runnable).start();
+        return cachedComic;
+    }
+
+    public void addCachedComic(Comic c) {
+        comicList.add(c);
+        postComics(comicList);
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
                     c.saveInfo();
                     c.downloadCover();
-                    comicList.add(c);
-                    comics.postValue(comicList);
                 } catch (Exception e) {
-                    errorText.postValue(e.getMessage());
+                    error.postValue(e);
                     e.printStackTrace();
                 }
             }
@@ -167,7 +234,7 @@ public class ComickService {
                     for (Comic c : comicList) {
                         c.updateData();
                         c.saveInfo();
-                        comics.postValue(comicList);
+                        postComics(comicList);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -186,11 +253,12 @@ public class ComickService {
         private Double downloadedLastChapterI = null;
         private String firstChapterId;
         private String lastChapterId;
+        private long lastModified;
         private String[] downloadedChapters = new String[0];
         private final MutableLiveData<String> downloadedLastChapterText = new MutableLiveData<>();
         private Integer currentChapterIndex = null;
         private String imageUrl;
-        private Bitmap coverBitmap;
+        private Bitmap coverBitmap = null;
         private boolean isUpdating = false;
 
         private String prettyPrint(Double d) {
@@ -240,6 +308,10 @@ public class ComickService {
             return isUpdating;
         }
 
+        public Long getLastModified() {
+            return lastModified;
+        }
+
         public LiveData<String> getDownloadedLastChapterText() {
             return downloadedLastChapterText;
         }
@@ -276,9 +348,9 @@ public class ComickService {
         }
 
         private Comic(String url) throws Exception {
-            downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
-
+            this.lastModified = System.currentTimeMillis();
             this.updateData(url);
+            downloadedLastChapterText.postValue(getFormattedDownloadedLastChapterI());
         }
 
         public void updateData() throws Exception {
@@ -322,6 +394,7 @@ public class ComickService {
         }
 
         private Comic(File file) throws Exception {
+            this.lastModified = file.lastModified();
             InputStream is = new FileInputStream(file.getAbsolutePath() + File.separator + INFO_FILE);
             int size = is.available();
             byte[] buffer = new byte[size];
@@ -402,6 +475,12 @@ public class ComickService {
             file.getParentFile().mkdirs();
             downloadImage(imageUrl, file);
             loadImage();
+        }
+
+        public void cacheCover() throws Exception {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            downloadImage(imageUrl, out);
+            coverBitmap = BitmapFactory.decodeStream(new ByteArrayInputStream(out.toByteArray()));
         }
 
         private void loadImage() throws FileNotFoundException {
@@ -491,13 +570,16 @@ public class ComickService {
     }
 
     public void downloadImage(String url, File file) throws IOException {
-        downloadImage(url, file, 1024);
+        downloadImage(url, new FileOutputStream(file), 1024);
     }
 
-    public void downloadImage(String url, File file, int bufferSize) throws IOException {
+    public void downloadImage(String url, OutputStream out) throws IOException {
+        downloadImage(url, out, 1024);
+    }
+
+    public void downloadImage(String url, OutputStream out, int bufferSize) throws IOException {
         URL urlO = new URL(url);
         InputStream in = new BufferedInputStream(urlO.openStream());
-        OutputStream out = new FileOutputStream(file);
         byte[] buf = new byte[bufferSize];
         int n;
         while (-1!=(n=in.read(buf))) {

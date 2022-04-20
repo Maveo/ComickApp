@@ -5,40 +5,72 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
+import androidx.navigation.Navigation;
 
+import com.skillor.comick.R;
 import com.skillor.comick.databinding.FragmentDownloadBinding;
 import com.skillor.comick.utils.ComickService;
 
 public class DownloadFragment extends Fragment {
 
     private FragmentDownloadBinding binding;
+    private ComickService.Comic cachedComic;
 
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentDownloadBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-        final TextView downloadUrlErrorText = binding.downloadUrlErrorText;
-        ComickService.getInstance().getErrorText().observe(getViewLifecycleOwner(), new Observer<String>() {
+        ComickService.getInstance().getError().observe(getViewLifecycleOwner(), new Observer<Exception>() {
             @Override
-            public void onChanged(String s) {
-                downloadUrlErrorText.setText(s);
+            public void onChanged(Exception e) {
+                if (e == null) {
+                    binding.downloadUrlErrorText.setText("");
+                } else {
+                    binding.downloadUrlErrorText.setText(e.getMessage());
+                    binding.cachedComicLoadingSpinner.setVisibility(View.GONE);
+                    binding.cachedComicGrid.setVisibility(View.GONE);
+                }
             }
         });
 
-        Button downloadUrlButton = binding.downloadUrlButton;
-        downloadUrlButton.setOnClickListener(new View.OnClickListener()
+        binding.searchUrlButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                ComickService.getInstance().downloadComic(binding.downloadUrlText.getText().toString());
+                binding.cachedComicLoadingSpinner.setVisibility(View.VISIBLE);
+                binding.cachedComicGrid.setVisibility(View.GONE);
+                ComickService.getInstance().cacheComic(binding.downloadUrlText.getText().toString())
+                        .observe(getViewLifecycleOwner(), new Observer<ComickService.Comic>() {
+                    @Override
+                    public void onChanged(ComickService.Comic c) {
+                        if (c != null) {
+                            cachedComic = c;
+                            binding.cachedComicLoadingSpinner.setVisibility(View.GONE);
+                            binding.cachedComicGrid.setVisibility(View.VISIBLE);
+                            binding.cachedComicCoverView.setImageBitmap(c.getCoverBitmap());
+                            binding.cachedComicTitleView.setText(c.getComicTitle());
+                            binding.cachedOnlineLastChapterView.setText(c.getFormattedLastChapterI());
+                        }
+                    }
+                });
                 binding.downloadUrlText.setText("");
+            }
+        });
+
+        binding.cachedComicAddButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (cachedComic != null) {
+                    ComickService.getInstance().addCachedComic(cachedComic);
+                    Navigation.findNavController(v).navigate(R.id.nav_overview);
+                }
             }
         });
 
