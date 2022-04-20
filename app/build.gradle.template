@@ -17,12 +17,6 @@ android {
 
     signingConfigs {
         release {
-            def tmpFile = new File(System.getProperty("user.home") + "/work/_temp/keystore/github-keystore.jks")
-
-            if (tmpFile.isFile()) {
-                tmpFile.renameTo("keystore/github-keystore.jks")
-            }
-
             storeFile = file("keystore/github-keystore.jks")
             storePassword System.getenv("SIGNING_STORE_PASSWORD")
             keyAlias System.getenv("SIGNING_KEY_ALIAS")
