@@ -24,15 +24,27 @@ jobs:
          chmod +x ./bump_version.sh
          ./bump_version.sh ${{ github.event.release.tag_name }}
         shell: bash
+      - name: Decode Keystore
+        env:
+            ENCODED_STRING: ${{ secrets.KEYSTORE }}
+        run: |
+            TMP_KEYSTORE_FILE_PATH="${RUNNER_TEMP}"/keystore
+            mkdir "${TMP_KEYSTORE_FILE_PATH}"
+            echo $ENCODED_STRING | base64 -di > "${TMP_KEYSTORE_FILE_PATH}"/github-keystore.jks
       - name: Build APK
-        run: bash ./gradlew assembleDebug --stacktrace
+        run: bash ./gradlew app:assembleRelease --stacktrace
+        env:
+          SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
+          SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
+          SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
+        
       - name: Rename APK
         run: |
-          mv app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/comick-${{ github.event.release.tag_name }}.apk 
+          mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/comick-${{ github.event.release.tag_name }}.apk 
       - name: Release APK
         uses: softprops/action-gh-release@v1
         with:
-          files: app/build/outputs/apk/debug/comick-${{ github.event.release.tag_name }}.apk
+          files: app/build/outputs/apk/release/comick-${{ github.event.release.tag_name }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Commit bumped version
