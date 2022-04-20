@@ -3,11 +3,15 @@ package com.skillor.comick;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
@@ -27,12 +31,16 @@ import com.skillor.comick.databinding.ActivityMainBinding;
 import com.skillor.comick.utils.ComickService;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
+
+    private static final int REQUEST_FOLDER_PERMISSIONS_CODE = 123;
 
     private boolean systemUIHidden = false;
 
@@ -124,12 +132,49 @@ public class MainActivity extends AppCompatActivity {
         return sharedPrefEditor;
     }
 
-    private boolean hasPermissions(String[] permisssions) {
+    private boolean hasPermission(String permission) {
         if (Build.VERSION.SDK_INT < 23) return true;
-        for (String permission: permisssions) {
-            if (checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED) return false;
+        if (Build.VERSION.SDK_INT >= 30
+                && permission.equals(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+                && !Environment.isExternalStorageManager()) {
+            return false;
+        }
+        return checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED;
+    }
+
+    private boolean hasPermissions(String[] permissions) {
+        if (Build.VERSION.SDK_INT < 23) return true;
+        for (String permission: permissions) {
+            if (!hasPermission(permission)) return true;
         }
         return true;
+    }
+
+
+    private void requestPermissions(String[] permissions) {
+        if (Build.VERSION.SDK_INT < 23) return;
+        List<String> missingPermissions = new ArrayList<>();
+        for (String permission: permissions) {
+            if (!hasPermission(permission)) {
+                missingPermissions.add(permission);
+            }
+        }
+
+        if (missingPermissions.isEmpty()) return;
+
+        if (Build.VERSION.SDK_INT >= 30 && missingPermissions.contains(Manifest.permission.MANAGE_EXTERNAL_STORAGE)) {
+            try {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                intent.addCategory("android.intent.category.DEFAULT");
+                intent.setData(Uri.parse(String.format("package:%s",getApplicationContext().getPackageName())));
+                startActivity(intent);
+            } catch (Exception e) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                startActivity(intent);
+            }
+        }
+
+        requestPermissions(permissions, REQUEST_FOLDER_PERMISSIONS_CODE);
     }
 
     public void loadDirectory() {
@@ -144,20 +189,15 @@ public class MainActivity extends AppCompatActivity {
             }
             if (Build.VERSION.SDK_INT >= 23) {
                 String[] permissions = {
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 };
                 if (Build.VERSION.SDK_INT >= 30) {
                     permissions = new String[]{
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
                             Manifest.permission.MANAGE_EXTERNAL_STORAGE
                     };
                 }
 
-                if (!hasPermissions(permissions)) {
-                    requestPermissions(permissions, 1);
-                }
+                requestPermissions(permissions);
             }
             File externalFile = new File(externalFilePath);
             if (!externalFile.isDirectory()) {
@@ -171,6 +211,17 @@ public class MainActivity extends AppCompatActivity {
         }
         ComickService.getInstance().initialize();
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case REQUEST_FOLDER_PERMISSIONS_CODE:
+                loadDirectory();
+                return;
+            default:
+    }
+}
 
     @Override
     public void onBackPressed() {
