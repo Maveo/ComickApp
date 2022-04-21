@@ -59,15 +59,15 @@ public class SummaryFragment extends Fragment {
         binding.summaryComicTitleView.setText(comic.getComicTitle());
 
 
-        ArrayList<Double> chapters = new ArrayList<>(comic.getChapters());
-        Collections.sort(chapters, new Comparator<Double>() {
+        ArrayList<ComickService.Comic.Chapter> chapters = new ArrayList<>(comic.getChapters());
+        Collections.sort(chapters, new Comparator<ComickService.Comic.Chapter>() {
             @Override
-            public int compare(Double o1, Double o2) {
-                return o1.compareTo(o2);
+            public int compare(ComickService.Comic.Chapter o1, ComickService.Comic.Chapter o2) {
+                return o1.getChapterI().compareTo(o2.getChapterI());
             }
         });
 
-        chapterAdapter = new ChapterAdapter(this, new ArrayList<>(chapters), comic);
+        chapterAdapter = new ChapterAdapter(this, chapters, comic);
         binding.chapterList.setAdapter(chapterAdapter);
 
         return root;
@@ -80,12 +80,12 @@ public class SummaryFragment extends Fragment {
     }
 }
 
-class ChapterAdapter extends ArrayAdapter<Double> {
+class ChapterAdapter extends ArrayAdapter<ComickService.Comic.Chapter> {
     private final SummaryFragment fragment;
-    private final List<Double> chapters;
+    private final List<ComickService.Comic.Chapter> chapters;
     private final ComickService.Comic comic;
 
-    public ChapterAdapter(SummaryFragment fragment, List<Double> chapters, ComickService.Comic comic) {
+    public ChapterAdapter(SummaryFragment fragment, List<ComickService.Comic.Chapter> chapters, ComickService.Comic comic) {
         super(fragment.requireActivity(), R.layout.summary_chapter_item, chapters);
         this.fragment = fragment;
         this.chapters = chapters;
@@ -98,8 +98,7 @@ class ChapterAdapter extends ArrayAdapter<Double> {
         LayoutInflater inflater = fragment.requireActivity().getLayoutInflater();
         if(convertView==null) row = inflater.inflate(R.layout.summary_chapter_item, null, true);
 
-        Double chapterI = chapters.get(position);
-        ComickService.Comic.Chapter chapter = comic.getChapter(chapterI);
+        ComickService.Comic.Chapter chapter = chapters.get(position);
 
         Button downloadDeleteButton = row.findViewById(R.id.downloadDeleteButton);
         ProgressBar downloadProgress = row.findViewById(R.id.downloadProgress);
@@ -112,7 +111,7 @@ class ChapterAdapter extends ArrayAdapter<Double> {
             @Override
             public void onChanged(Integer progress) {
                 if (chapter.isDownloading()) {
-                    downloadProgress.setProgress(progress);
+                    downloadProgress.setProgress(chapter.getDownloading().getValue());
                     downloadProgress.setVisibility(View.VISIBLE);
                     downloadDeleteButton.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.picture_frame, 0, 0, 0);
                 } else if (chapter.isDownloaded()) {
@@ -143,7 +142,7 @@ class ChapterAdapter extends ArrayAdapter<Double> {
         readButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                comic.setCurrentChapterI(chapterI);
+                comic.setCurrentChapterI(chapter.getChapterI());
                 Bundle bundle = new Bundle();
                 bundle.putString("comic_title", comic.getComicTitle());
                 Navigation.findNavController(v).popBackStack();

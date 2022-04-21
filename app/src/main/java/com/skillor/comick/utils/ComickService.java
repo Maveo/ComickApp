@@ -33,15 +33,17 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 public class ComickService {
     private static ComickService INSTANCE;
@@ -70,39 +72,40 @@ public class ComickService {
 
     private final MutableLiveData<Integer> sorted = new MutableLiveData<>();
 
+    private final DecimalFormatSymbols decimalFormatSymbols;
+
     private ComickService() {
         comics.setValue(new ArrayList<>());
         sorted.setValue(SORTED_ADDED_DESC);
+
+        decimalFormatSymbols = new DecimalFormatSymbols(Locale.ENGLISH);
+        decimalFormatSymbols.setDecimalSeparator('.');
+        decimalFormatSymbols.setGroupingSeparator(Character.MIN_VALUE);
     }
 
-    public void initialize() {
-        if (directory == null) return;
+    public Thread initialize() {
+        if (directory == null) return null;
         comicList.clear();
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
-                    try {
-                        comicList.add(new Comic(file));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        postComics(comicList);
-    }
-
-    public void initializeThreaded() {
-        if (directory == null) return;
-        comicList.clear();
-        postComics(comicList);
-        new Thread(new Runnable() {
+        Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                initialize();
+                File[] files = directory.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
+                            try {
+                                comicList.add(new Comic(file));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
+                postComics(comicList);
             }
-        }).start();
+        });
+        t.start();
+        return t;
     }
 
     public void setActivity(MainActivity activity) {
@@ -149,7 +152,7 @@ public class ComickService {
 
     public String prettyPrint(Double d) {
         if (d == null) return activity.getString(R.string.none);
-        return (new DecimalFormat("#.##")).format(d);
+        return (new DecimalFormat("#.##", decimalFormatSymbols)).format(d);
     }
 
     public LiveData<Exception> getError() {
@@ -306,7 +309,7 @@ public class ComickService {
 
     public class Comic {
         public class Chapter {
-            private final MutableLiveData<Integer> downloading = new MutableLiveData<>();
+            private final MutableLiveData<Integer> downloading;
             private final Double chapterI;
             private final String chapterId;
             private boolean abortDownload = false;
@@ -315,10 +318,10 @@ public class ComickService {
                 this.chapterI = chapterI;
                 this.chapterId = chapterId;
                 if (getFinishedFile().isFile()) {
-                    this.downloading.postValue(100);
+                    downloading = new MutableLiveData<>(100);
                 } else {
-                    this.downloading.postValue(-1);
-                    delete();
+                    downloading = new MutableLiveData<>(-1);
+                    deleteDirectory(new File(getPath()));
                 }
             }
 
@@ -328,6 +331,10 @@ public class ComickService {
 
             public String getId() {
                 return chapterId;
+            }
+
+            public Double getChapterI() {
+                return chapterI;
             }
 
             public boolean isDownloading() {
@@ -398,10 +405,10 @@ public class ComickService {
                 return imageUrls;
             }
 
-            private void downloadChapterImage(String imageId, File file) throws Exception {
+            private void downloadChapterImage(String imageId, OutputStream out) throws Exception {
                 for (String baseUrl : BASE_IMAGE_URLS) {
                     try {
-                        downloadImage(baseUrl + imageId, new FileOutputStream(file));
+                        downloadImage(baseUrl + imageId, out);
                         return;
                     } catch (Exception ignored) {
 
@@ -441,7 +448,7 @@ public class ComickService {
                         imageId = imageId.substring(0, imageId.lastIndexOf(".")) + "-m.jpg";
                     }
                     File file = new File(getPath() + File.separator + i + ".jpg");
-                    downloadChapterImage(imageId, file);
+                    downloadChapterImage(imageId, new FileOutputStream(file));
                     this.downloading.postValue(i*100/images.length());
                 }
                 getFinishedFile().createNewFile();
@@ -521,8 +528,8 @@ public class ComickService {
             activity.getSharedPrefEditor().commit();
         }
 
-        public Set<Double> getChapters() {
-            return chapters.keySet();
+        public Collection<Chapter> getChapters() {
+            return chapters.values();
         }
 
         public Chapter getChapter(Double key) {
@@ -572,7 +579,7 @@ public class ComickService {
             String contentId = split[split.length - 1];
             int lastSlash = url.lastIndexOf("/");
             comicPath = url.substring(BASE_URL.length(), lastSlash); // e.g. comic/solo-leveling
-            String chapterPath = url.substring(lastSlash); // e.g. nOrQY-chapter-0-en
+            String chapterPath = url.substring(lastSlash + 1); // e.g. nOrQY-chapter-0-en
             comicDataBase = BASE_URL + "_next/data/" + contentId + "/" + comicPath + "/";
 
             JSONObject chapter = new JSONObject(request(comicDataBase + chapterPath + ".json"));

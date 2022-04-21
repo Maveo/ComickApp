@@ -101,7 +101,10 @@ public class MainActivity extends AppCompatActivity {
         sharedPrefEditor = sharedPref.edit();
 
         ComickService.getInstance().setActivity(this);
-        this.loadDirectory(true);
+        try {
+            this.loadDirectory().join();
+        } catch (InterruptedException ignored) {
+        }
 
         setOffline();
         binding.goOfflineButton.setOnClickListener(new View.OnClickListener() {
@@ -144,17 +147,15 @@ public class MainActivity extends AppCompatActivity {
     private boolean hasPermission(String permission) {
         if (Build.VERSION.SDK_INT < 23) return true;
         if (Build.VERSION.SDK_INT >= 30
-                && permission.equals(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
-                && !Environment.isExternalStorageManager()) {
-            return false;
+                && permission.equals(Manifest.permission.MANAGE_EXTERNAL_STORAGE)) {
+            return Environment.isExternalStorageManager();
         }
         return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     private boolean hasPermissions(String[] permissions) {
-        if (Build.VERSION.SDK_INT < 23) return true;
         for (String permission: permissions) {
-            if (!hasPermission(permission)) return true;
+            if (!hasPermission(permission)) return false;
         }
         return true;
     }
@@ -185,11 +186,7 @@ public class MainActivity extends AppCompatActivity {
         requestPermissions(missingPermissions.toArray(new String[0]), REQUEST_FOLDER_PERMISSIONS_CODE);
     }
 
-    public void loadDirectory() {
-        loadDirectory(false);
-    }
-
-    public void loadDirectory(boolean firstLoad) {
+    public Thread loadDirectory() {
         boolean useExternalFiles = sharedPref.getBoolean(getString(R.string.use_external_files_key), false);
 
         if (useExternalFiles) {
@@ -197,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
             if (externalFilePath == null) {
                 sharedPrefEditor.putBoolean(getString(R.string.use_external_files_key), false);
                 sharedPrefEditor.apply();
-                return;
+                return loadDirectory();
             }
             if (Build.VERSION.SDK_INT >= 23) {
                 String[] permissions = {
@@ -217,17 +214,13 @@ public class MainActivity extends AppCompatActivity {
             if (!externalFile.isDirectory()) {
                 sharedPrefEditor.putBoolean(getString(R.string.use_external_files_key), false);
                 sharedPrefEditor.apply();
-                return;
+                return loadDirectory();
             }
             ComickService.getInstance().setDirectory(externalFile);
         } else {
             ComickService.getInstance().setDirectory(getApplicationContext().getExternalFilesDir(null));
         }
-        if (firstLoad) {
-            ComickService.getInstance().initialize();
-        } else {
-            ComickService.getInstance().initializeThreaded();
-        }
+        return ComickService.getInstance().initialize();
     }
 
     @Override
