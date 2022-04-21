@@ -93,6 +93,18 @@ public class ComickService {
         postComics(comicList);
     }
 
+    public void initializeThreaded() {
+        if (directory == null) return;
+        comicList.clear();
+        postComics(comicList);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                initialize();
+            }
+        }).start();
+    }
+
     public void setActivity(MainActivity activity) {
         this.activity = activity;
         this.isOffline = activity.getSharedPref().getBoolean(activity.getString(R.string.last_is_offline_key), false);

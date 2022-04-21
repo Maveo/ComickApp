@@ -101,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
         sharedPrefEditor = sharedPref.edit();
 
         ComickService.getInstance().setActivity(this);
-        this.loadDirectory();
+        this.loadDirectory(true);
 
         setOffline();
         binding.goOfflineButton.setOnClickListener(new View.OnClickListener() {
@@ -186,6 +186,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void loadDirectory() {
+        loadDirectory(false);
+    }
+
+    public void loadDirectory(boolean firstLoad) {
         boolean useExternalFiles = sharedPref.getBoolean(getString(R.string.use_external_files_key), false);
 
         if (useExternalFiles) {
@@ -219,7 +223,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             ComickService.getInstance().setDirectory(getApplicationContext().getExternalFilesDir(null));
         }
-        ComickService.getInstance().initialize();
+        if (firstLoad) {
+            ComickService.getInstance().initialize();
+        } else {
+            ComickService.getInstance().initializeThreaded();
+        }
     }
 
     @Override
