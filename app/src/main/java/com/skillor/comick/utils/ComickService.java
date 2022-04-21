@@ -32,7 +32,6 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,24 +78,19 @@ public class ComickService {
     public void initialize() {
         if (directory == null) return;
         comicList.clear();
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                File[] files = directory.listFiles();
-                if (files != null) {
-                    for (File file : files) {
-                        if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
-                            try {
-                                comicList.add(new Comic(file));
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
+                    try {
+                        comicList.add(new Comic(file));
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }
-                postComics(comicList);
             }
-        }).start();
+        }
+        postComics(comicList);
     }
 
     public void setActivity(MainActivity activity) {
