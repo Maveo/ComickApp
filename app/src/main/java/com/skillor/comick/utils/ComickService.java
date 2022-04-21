@@ -567,6 +567,7 @@ public class ComickService {
         private Comic(String url) throws Exception {
             this.lastModified = System.currentTimeMillis();
             this.updateData(url);
+            currentChapterI = getFirstChapterI();
         }
 
         public void updateData() throws Exception {
@@ -625,7 +626,7 @@ public class ComickService {
 
             loadImage();
 
-            currentChapterI = Double.parseDouble(activity.getSharedPref().getString(activity.getString(R.string.current_chapter_prefix_key) + getComicId(), "0"));
+            currentChapterI = Double.parseDouble(activity.getSharedPref().getString(activity.getString(R.string.current_chapter_prefix_key) + getComicId(), "-1"));
             if (currentChapterI < getFirstChapterI()) {
                 currentChapterI = getFirstChapterI();
             } else if (currentChapterI > getLastChapterI()) {
