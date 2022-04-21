@@ -58,19 +58,6 @@ public class MainActivity extends AppCompatActivity {
 
         setSupportActionBar(binding.appBarMain.toolbar);
 
-        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        sharedPrefEditor = sharedPref.edit();
-
-        rotationLocked = sharedPref.getBoolean(getString(R.string.lock_rotation_key), false);
-        setRotationLock();
-
-        binding.lockRotationButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                rotationLocked = !rotationLocked;
-                setRotationLock();
-            }
-        });
 
         binding.exitButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,19 +87,41 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
                 R.id.nav_download,
                 R.id.nav_overview,
+                R.id.nav_summary,
                 R.id.nav_reader,
                 R.id.nav_settings).setOpenableLayout(drawer).build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
 
+        sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        sharedPrefEditor = sharedPref.edit();
+
         ComickService.getInstance().setActivity(this);
         this.loadDirectory();
+
+        setOffline();
+        binding.goOfflineButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ComickService.getInstance().setOffline(!ComickService.getInstance().isOffline());
+                setOffline();
+            }
+        });
+
+        rotationLocked = sharedPref.getBoolean(getString(R.string.lock_rotation_key), false);
+        setRotationLock();
+
+        binding.lockRotationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                rotationLocked = !rotationLocked;
+                setRotationLock();
+            }
+        });
 
         String lastRead = sharedPref.getString(getString(R.string.last_read_key), null);
         if (lastRead != null) {
@@ -139,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 && !Environment.isExternalStorageManager()) {
             return false;
         }
-        return checkSelfPermission(permission) == PackageManager.PERMISSION_DENIED;
+        return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED;
     }
 
     private boolean hasPermissions(String[] permissions) {
@@ -149,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
 
     private void requestPermissions(String[] permissions) {
         if (Build.VERSION.SDK_INT < 23) return;
@@ -174,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        requestPermissions(permissions, REQUEST_FOLDER_PERMISSIONS_CODE);
+        requestPermissions(missingPermissions.toArray(new String[0]), REQUEST_FOLDER_PERMISSIONS_CODE);
     }
 
     public void loadDirectory() {
@@ -189,10 +197,12 @@ public class MainActivity extends AppCompatActivity {
             }
             if (Build.VERSION.SDK_INT >= 23) {
                 String[] permissions = {
+                        Manifest.permission.READ_EXTERNAL_STORAGE,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 };
                 if (Build.VERSION.SDK_INT >= 30) {
                     permissions = new String[]{
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
                             Manifest.permission.MANAGE_EXTERNAL_STORAGE
                     };
                 }
@@ -213,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQUEST_FOLDER_PERMISSIONS_CODE:
@@ -257,6 +267,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         ab.show();
+    }
+
+    private void setOffline() {
+        if (ComickService.getInstance().isOffline()) {
+            ((Button) findViewById(R.id.goOfflineButton)).setText(R.string.go_online);
+        } else {
+            ((Button) findViewById(R.id.goOfflineButton)).setText(R.string.go_offline);
+        }
     }
 
     private void setRotationLock() {

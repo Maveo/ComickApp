@@ -34,6 +34,12 @@
                 app:layout_constraintStart_toStartOf="parent">
 
                 <Button
+                    android:id="@+id/goOfflineButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/go_offline" />
+
+                <Button
                     android:id="@+id/lockRotationButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

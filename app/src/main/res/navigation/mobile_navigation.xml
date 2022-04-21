@@ -18,6 +18,12 @@
         tools:layout="@layout/fragment_overview" />
 
     <fragment
+        android:id="@+id/nav_summary"
+        android:name="com.skillor.comick.ui.SummaryFragment"
+        android:label="@string/menu_summary"
+        tools:layout="@layout/fragment_summary" />
+
+    <fragment
         android:id="@+id/nav_reader"
         android:name="com.skillor.comick.ui.ReaderFragment"
         android:label="@string/menu_reader"
