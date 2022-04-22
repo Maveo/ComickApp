@@ -274,20 +274,25 @@ public class ComickService {
         }).start();
     }
 
-    public LiveData<String[]> getChapterImages(Comic.Chapter chapter) {
-        MutableLiveData<String[]> chapterImages = new MutableLiveData<>();
-        chapterImages.setValue(new String[0]);
-        new Thread(new Runnable() {
+    public String[][] getChapterImages(Comic.Chapter chapter) {
+        final String[][][] value = new String[1][][];
+        Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    chapterImages.postValue(chapter.getChapterImages());
+                    value[0] = chapter.getChapterImages();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
-        }).start();
-        return chapterImages;
+        });
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return value[0];
     }
 
     public void updateAllComicData() {
@@ -365,15 +370,15 @@ public class ComickService {
                 return new File(getPath() + File.separator + CHAPTER_DOWNLOAD_FINISHED_FILE);
             }
 
-            public String[] getChapterImages() throws Exception {
+            public String[][] getChapterImages() throws Exception {
                 if (isDownloaded()) {
-                    String [] images = (new File(getPath())).list(new FilenameFilter() {
+                    String[] images = (new File(getPath())).list(new FilenameFilter() {
                         @Override
                         public boolean accept(File dir, String name) {
                             return name.toLowerCase().endsWith(".jpg");
                         }
                     });
-                    if (images == null) return new String[0];
+                    if (images == null) return new String[0][0];
                     Arrays.sort(images, new Comparator<String>() {
                         @Override
                         public int compare(String o1, String o2) {
@@ -384,15 +389,19 @@ public class ComickService {
                             }
                         }
                     });
-                    return images;
+                    String[][] rimages = new String[images.length][1];
+                    for (int i=0; i < images.length; i++) {
+                        rimages[i][0] = images[i];
+                    }
+                    return rimages;
                 }
-                if (isOffline()) return new String[0];
+                if (isOffline()) return new String[0][0];
 
                 JSONObject chapter = new JSONObject(request(getComicDataBase() + chapterId + ".json"));
 
                 JSONArray images = chapter.getJSONObject("pageProps").getJSONObject("chapter").getJSONArray("md_images");
 
-                String[] imageUrls = new String[images.length()];
+                String[][] imageUrls = new String[images.length()][BASE_IMAGE_URLS.length];
 
                 for (int i=0; i < images.length(); i++) {
                     JSONObject image = images.getJSONObject(i);
@@ -400,7 +409,9 @@ public class ComickService {
                     if (!image.isNull("optimized")) {
                         imageId = imageId.substring(0, imageId.lastIndexOf(".")) + "-m.jpg";
                     }
-                    imageUrls[i] = getChapterImageUrl(imageId);
+                    for (int j=0; j < BASE_IMAGE_URLS.length; j++) {
+                        imageUrls[i][j] = BASE_IMAGE_URLS[j] + imageId;
+                    }
                 }
                 return imageUrls;
             }
@@ -410,18 +421,6 @@ public class ComickService {
                     try {
                         downloadImage(baseUrl + imageId, out);
                         return;
-                    } catch (Exception ignored) {
-
-                    }
-                }
-                throw new Exception("Image not found: " + imageId);
-            }
-
-            private String getChapterImageUrl(String imageId) throws Exception {
-                for (String baseUrl : BASE_IMAGE_URLS) {
-                    try {
-                        request(baseUrl + imageId, "HEAD");
-                        return baseUrl + imageId;
                     } catch (Exception ignored) {
 
                     }

@@ -38,6 +38,7 @@ public class ReaderFragment extends Fragment {
         readerWebView = binding.readerWebview;
 
         readerWebView.getSettings().setAllowFileAccess(true);
+        readerWebView.getSettings().setJavaScriptEnabled(true);
 
         readerWebView.setWebViewClient(new WebViewClient() {
             @Override
@@ -99,12 +100,7 @@ public class ReaderFragment extends Fragment {
     }
 
     private void refreshWebview() {
-        ComickService.getInstance().getChapterImages(comic.getCurrentChapter()).observe(getViewLifecycleOwner(), new Observer<String[]>() {
-            @Override
-            public void onChanged(String[] chapterImages) {
-                readerWebView.loadDataWithBaseURL("file://"+comic.getCurrentChapter().getPath()+"/", createHtml(chapterImages), "text/html", "UTF-8", null);
-            }
-        });
+        readerWebView.loadDataWithBaseURL("file://"+comic.getCurrentChapter().getPath()+"/", createHtml(ComickService.getInstance().getChapterImages(comic.getCurrentChapter())), "text/html", "UTF-8", null);
     }
 
     @Override
@@ -113,7 +109,7 @@ public class ReaderFragment extends Fragment {
         binding = null;
     }
 
-    private String createHtml(String[] chapterImages) {
+    private String createHtml(String[][] chapterImages) {
         ComickService.Comic.Chapter currentChapter = comic.getCurrentChapter();
         StringBuilder builder = new StringBuilder();
         builder.append("<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, shrink-to-fit=no\"><title>Comick</title><style type=\"text/css\">html,body{width: 100%;height:100%;margin:0;}.outer-container{width:100%;display:flex;justify-content:center;}.inner-container{width:100%;max-width:500px;display:flex;flex-direction:column;}#images-container{display:flex;flex-direction:column;}a{border-radius:4px;background:#4479BA;color:#FFF;padding:8px 12px;text-decoration:none;}.left{float:left;}.right{float:right;}img{width:100%;}</style></head><body><div class=\"outer-container\"><div class=\"inner-container\"><div>");
@@ -127,10 +123,16 @@ public class ReaderFragment extends Fragment {
         if (ComickService.getInstance().isOffline() && !currentChapter.isDownloaded()) {
             builder.append("<h2>").append(getString(R.string.reading_offline)).append("</h2>");
         } else {
-            for (String img: chapterImages) {
-                builder.append("<img src=\"");
-                builder.append(img);
-                builder.append("\">");
+            for (String[] img: chapterImages) {
+                builder.append("<img alt=\"\" src=\"");
+                builder.append(img[0]);
+                builder.append("\"");
+                if (img.length > 1) {
+                    builder.append(" onerror=\"this.onerror=null;this.src='");
+                    builder.append(img[1]);
+                    builder.append("';\"");
+                }
+                builder.append(">");
             }
         }
 
