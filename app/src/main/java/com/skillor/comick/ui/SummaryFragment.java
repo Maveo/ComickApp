@@ -28,9 +28,6 @@ public class SummaryFragment extends Fragment {
 
     private FragmentSummaryBinding binding;
 
-    private ComickService.Comic comic;
-    private ChapterAdapter chapterAdapter;
-
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentSummaryBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
@@ -43,6 +40,7 @@ public class SummaryFragment extends Fragment {
             }
         });
 
+        ComickService.Comic comic;
         if (getArguments() != null) {
             comic = ComickService.getInstance().getComicByTitle(getArguments().getString("comic_title"));
         } else {
@@ -58,6 +56,18 @@ public class SummaryFragment extends Fragment {
         binding.summaryComicCoverView.setImageBitmap(comic.getCoverBitmap());
         binding.summaryComicTitleView.setText(comic.getComicTitle());
 
+        binding.readingChapterView.setText(comic.getCurrentChapter().getFormattedI());
+
+        binding.readButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle bundle = new Bundle();
+                bundle.putString("comic_title", comic.getComicTitle());
+                Navigation.findNavController(v).popBackStack();
+                Navigation.findNavController(v).navigate(R.id.nav_reader, bundle);
+            }
+        });
+
 
         ArrayList<ComickService.Comic.Chapter> chapters = new ArrayList<>(comic.getChapters());
         Collections.sort(chapters, new Comparator<ComickService.Comic.Chapter>() {
@@ -67,7 +77,7 @@ public class SummaryFragment extends Fragment {
             }
         });
 
-        chapterAdapter = new ChapterAdapter(this, chapters, comic);
+        ChapterAdapter chapterAdapter = new ChapterAdapter(this, chapters, comic);
         binding.chapterList.setAdapter(chapterAdapter);
 
         return root;
