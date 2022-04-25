@@ -101,10 +101,6 @@ public class MainActivity extends AppCompatActivity {
         sharedPrefEditor = sharedPref.edit();
 
         ComickService.getInstance().setActivity(this);
-        try {
-            this.loadDirectory().join();
-        } catch (InterruptedException ignored) {
-        }
 
         setOffline();
         binding.goOfflineButton.setOnClickListener(new View.OnClickListener() {
@@ -128,12 +124,14 @@ public class MainActivity extends AppCompatActivity {
 
         String lastRead = sharedPref.getString(getString(R.string.last_read_key), null);
         if (lastRead != null) {
+            ComickService.getInstance().loadComicByTitle(lastRead);
             Bundle bundle = new Bundle();
             bundle.putString("comic_title", lastRead);
             navController.popBackStack();
             navController.navigate(R.id.nav_reader, bundle);
         }
 
+        this.loadDirectory();
     }
 
     public SharedPreferences getSharedPref() {
@@ -186,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
         requestPermissions(missingPermissions.toArray(new String[0]), REQUEST_FOLDER_PERMISSIONS_CODE);
     }
 
-    public Thread loadDirectory() {
+    public void loadDirectory() {
         boolean useExternalFiles = sharedPref.getBoolean(getString(R.string.use_external_files_key), false);
 
         if (useExternalFiles) {
@@ -194,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
             if (externalFilePath == null) {
                 sharedPrefEditor.putBoolean(getString(R.string.use_external_files_key), false);
                 sharedPrefEditor.apply();
-                return loadDirectory();
+                loadDirectory();
             }
             if (Build.VERSION.SDK_INT >= 23) {
                 String[] permissions = {
@@ -214,13 +212,13 @@ public class MainActivity extends AppCompatActivity {
             if (!externalFile.isDirectory()) {
                 sharedPrefEditor.putBoolean(getString(R.string.use_external_files_key), false);
                 sharedPrefEditor.apply();
-                return loadDirectory();
+                loadDirectory();
             }
             ComickService.getInstance().setDirectory(externalFile);
         } else {
             ComickService.getInstance().setDirectory(getApplicationContext().getExternalFilesDir(null));
         }
-        return ComickService.getInstance().initialize();
+        ComickService.getInstance().initialize();
     }
 
     @Override

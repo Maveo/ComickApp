@@ -40,16 +40,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class ComickService {
     private static ComickService INSTANCE;
 
     private final MutableLiveData<Exception> error = new MutableLiveData<>();
-    private final List<Comic> comicList = new ArrayList<>();
+    private final Set<Comic> comicSet = new HashSet<>();
     private final MutableLiveData<List<Comic>> comics = new MutableLiveData<>();
 
     private boolean isOffline = false;
@@ -83,9 +85,9 @@ public class ComickService {
         decimalFormatSymbols.setGroupingSeparator(Character.MIN_VALUE);
     }
 
-    public Thread initialize() {
-        if (directory == null) return null;
-        comicList.clear();
+    public void initialize() {
+        if (directory == null) return;
+        comicSet.clear();
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -94,18 +96,29 @@ public class ComickService {
                     for (File file : files) {
                         if (file.isDirectory() && file.getPath().endsWith(COMIC_SUFFIX)) {
                             try {
-                                comicList.add(new Comic(file));
+                                comicSet.add(new Comic(file));
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
                     }
                 }
-                postComics(comicList);
+                postComics(new ArrayList<>(comicSet));
             }
         });
         t.start();
-        return t;
+    }
+
+    public void loadComicByTitle(String comicTitle) {
+        if (directory == null) return;
+        File file = new File(directory.getAbsolutePath() + File.separator + comicTitle + COMIC_SUFFIX);
+        if (!file.isDirectory()) return;
+        try {
+            comicSet.add(new Comic(file));
+        } catch (Exception ignored) {
+
+        }
+        postComics(new ArrayList<>(comicSet));
     }
 
     public void setActivity(MainActivity activity) {
@@ -140,7 +153,7 @@ public class ComickService {
 
     public void setSorted(int sorted) {
         this.sorted.setValue(sorted);
-        postComics(comicList);
+        postComics(new ArrayList<>(comicSet));
     }
 
     public static ComickService getInstance() {
@@ -186,16 +199,16 @@ public class ComickService {
     }
 
     public Comic getLastReadComic() {
-        if (comicList.isEmpty()) return null;
+        if (comicSet.isEmpty()) return null;
         String lastRead = activity.getSharedPref().getString(activity.getString(R.string.last_read_key), null);
         if (lastRead != null) {
             return getComicByTitle(lastRead);
         }
-        return comicList.get(0);
+        return comicSet.toArray(new Comic[0])[0];
     }
 
     public Comic getComicByTitle(String title) {
-        for (Comic comic : comicList) {
+        for (Comic comic : comicSet) {
             if (comic.getComicTitle().equals(title)) {
                 return comic;
             }
@@ -212,7 +225,7 @@ public class ComickService {
             public void run() {
                 try {
                     Comic c = new Comic(url);
-                    for (Comic comic : comicList) {
+                    for (Comic comic : comicSet) {
                         if (comic.getComicTitle().equals(c.getComicTitle())) {
                             error.postValue(new Exception("Comic already exists: " + c.getComicTitle()));
                             return;
@@ -230,8 +243,8 @@ public class ComickService {
     }
 
     public void addCachedComic(Comic c) {
-        comicList.add(c);
-        postComics(comicList);
+        comicSet.add(c);
+        postComics(new ArrayList<>(comicSet));
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -300,10 +313,10 @@ public class ComickService {
             @Override
             public void run() {
                 try {
-                    for (Comic c : comicList) {
+                    for (Comic c : comicSet) {
                         c.updateData();
                         c.saveInfo();
-                        postComics(comicList);
+                        postComics(new ArrayList<>(comicSet));
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -631,6 +644,23 @@ public class ComickService {
             } else if (currentChapterI > getLastChapterI()) {
                 currentChapterI = getLastChapterI();
             }
+        }
+
+        @Override
+        public int hashCode() {
+            return getComicTitle().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (this.getClass() != obj.getClass())
+                return false;
+            Comic comic = (Comic) obj;
+            return getComicTitle().equals(comic.getComicTitle());
         }
 
         private String chapterId(JSONObject chapter) throws JSONException {
