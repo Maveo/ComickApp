@@ -118,7 +118,7 @@ public class ComickService {
         } catch (Exception ignored) {
 
         }
-        postComics(new ArrayList<>(comicSet));
+        postComics(new ArrayList<>(comicSet), true);
     }
 
     public void setActivity(MainActivity activity) {
@@ -173,6 +173,10 @@ public class ComickService {
     }
 
     private void postComics(List<Comic> comics) {
+        postComics(comics, false);
+    }
+
+    private void postComics(List<Comic> comics, boolean isSet) {
         Integer sorted = this.sorted.getValue();
         if (sorted != null) {
             Collections.sort(comics, new Comparator<Comic>() {
@@ -191,7 +195,11 @@ public class ComickService {
                 }
             });
         }
-        this.comics.postValue(comics);
+        if (isSet) {
+            this.comics.setValue(comics);
+        } else {
+            this.comics.postValue(comics);
+        }
     }
 
     public LiveData<List<Comic>> getComics() {
