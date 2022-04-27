@@ -87,7 +87,6 @@ public class ComickService {
 
     public void initialize() {
         if (directory == null) return;
-        comicSet.clear();
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
