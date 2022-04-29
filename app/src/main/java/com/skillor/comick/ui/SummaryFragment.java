@@ -68,6 +68,23 @@ public class SummaryFragment extends Fragment {
             }
         });
 
+        binding.updateButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            comic.updateData();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+        });
+
+
 
         ArrayList<ComickService.Comic.Chapter> chapters = new ArrayList<>(comic.getChapters());
         Collections.sort(chapters, new Comparator<ComickService.Comic.Chapter>() {

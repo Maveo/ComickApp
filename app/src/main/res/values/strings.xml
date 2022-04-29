@@ -15,6 +15,7 @@
     <string name="search_comic">Search</string>
     <string name="add_comic">Add</string>
     <string name="update_all_comics">Update All</string>
+    <string name="update_one_comic">Update</string>
     <string name="chapter_url">Chapter Url</string>
     <string name="online_last_chapter">Online:</string>
     <string name="comic_cover_hint">Cover</string>
