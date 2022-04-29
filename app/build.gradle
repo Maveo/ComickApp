@@ -9,8 +9,8 @@ android {
         applicationId "com.skillor.comick"
         minSdk 21
         targetSdk 31
-        versionCode 12
-        versionName "0.3.5"
+        versionCode 13
+        versionName "0.3.6"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
